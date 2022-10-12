@@ -7,6 +7,8 @@ use app\models\UserSearch;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\filters\VerbFilter;
+use Yii;
+use yii\helpers\Url;
 
 /**
  * UserController implements the CRUD actions for User model.
@@ -71,7 +73,7 @@ class UserController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(['view', 'id' => $model->id]);
+                return $this->redirect(Url::toRoute('site/index', $schema = true));
             }
         } else {
             $model->loadDefaultValues();
