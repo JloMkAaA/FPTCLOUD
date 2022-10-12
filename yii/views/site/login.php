@@ -50,36 +50,6 @@ $this->title = 'Вход';
     </section>
    <style>
 
-    #login-form{
-        max-width: 400px;
-       
-    }
-    .site-login{
-        margin-left:450px;
-    }
-    .custom-checkbox{
-        width: 200px;
-    }
-    .color-grey{
-        color:brown;
-    }
-    .content_login{
-        background: black;
-      position: relative;
-    bottom: 150px;
-      width: 500px;
-    }
-    .section_btn-login{
-        position: relative;
-        right: 45px;
-        width: 120px;
-
-    }
-    .section_btn-creat{
-        position: relative;
-        left: 135px;
-        width: 120px;
-    }
    </style>
    <script>
 function bg_sun(){

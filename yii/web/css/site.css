@@ -1,4 +1,4 @@
-main > .container {
+/* main > .container {
     padding: 70px 15px 20px;
 }
 
@@ -19,7 +19,7 @@ main > .container {
 }
 
 /* add sorting icons to gridview sort links */
-a.asc:after, a.desc:after {
+/* a.asc:after, a.desc:after {
     content: '';
     left: 3px;
     display: inline-block;
@@ -58,7 +58,7 @@ a.desc:after {
     margin: 0 0 15px 0;
 }
 
-/* align the logout "link" (button in form) of the navbar */
+
 .nav li > form > button.logout {
     padding-top: 7px;
     color: rgba(255, 255, 255, 0.5);
@@ -81,4 +81,4 @@ a.desc:after {
 
 .nav > li > form > button.logout:focus {
     outline: none;
-}
+} 
