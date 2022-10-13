@@ -6,6 +6,7 @@ use Yii;
 use yii\web\Controller;
 use yii\filters\AccessControl;
 use app\models\Signin;
+use app\models\User;
 
 class UserController extends Controller
 {
@@ -29,6 +30,20 @@ class UserController extends Controller
 				],
 			],
 		];
+	}
+
+	public function actionSignup()
+	{
+		$model = new User();
+        if ($this->request->isPost) {
+            if ($model->load($this->request->post()) && $model->save()) {
+                return $this->goBack();
+            }
+        } else {
+            $model->loadDefaultValues();
+        }
+
+		return $this->render('signup', ['model' => $model]);
 	}
 
 	public function actionSignin()

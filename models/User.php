@@ -3,60 +3,78 @@
 namespace app\models;
 
 use Yii;
-use yii\base\BaseObject;
+use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
-class User extends BaseObject implements IdentityInterface
+class User extends ActiveRecord implements IdentityInterface
 {
-	public $id;
-	public $username;
-	public $password;
+    public static function tableName()
+    {
+        return 'user';
+    }
 
-	private static $users = [
-		'1' => [
-			'id' => '1',
-			'username' => 'admin',
-			'password' => 'admin',
-		],
-	];
+    public function rules()
+    {
+        return [
+            [['login', 'password', 'fio'], 'required'],
+            [['login', 'password', 'fio'], 'string', 'max' => 255],
+            [['login'], 'unique'],
+        ];
+    }
 
-	public static function findIdentity($id)
-	{
-		return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
-	}
+    public function attributeLabels()
+    {
+        return [
+            'id' => 'ID',
+            'login' => 'Логин',
+            'password' => 'Пароль',
+            'fio' => 'ФИО',
+        ];
+    }
+    
+    public static function findIdentity($id)
+    {
+        return static::findOne($id);
+    }
 
-	public static function findIdentityByAccessToken($token, $type = null)
-	{
-		return null;
-	}
+    public static function findIdentityByAccessToken($token, $type = null)
+    {
+        return null;
+    }
 
-	public static function findByUsername($username)
-	{
-		foreach (self::$users as $user) {
-			if (strcasecmp($user['username'], $username) === 0) {
-				return new static($user);
-			}
-		}
-		return null;
-	}
+    public function getId()
+    {
+        return $this->id;
+    }
 
-	public function getId()
-	{
-		return $this->id;
-	}
+    public function getAuthKey()
+    {
+        return null;
+    }
 
-	public function getAuthKey()
-	{
-		return null;
-	}
+    public function validateAuthKey($authKey)
+    {
+        return null;
+    }
 
-	public function validateAuthKey($authKey)
-	{
-		return null;
-	}
+    public function validatePassword($password)
+    {
+        return $this->password === $password;
+    }
 
-	public function validatePassword($password)
-	{
-		return $this->password === $password;
-	}
+    public static function findByLogin($login)
+    {
+        return self::find()->where(['login' => $login])->one();
+    }
+
+    // public function beforeSave($insert)
+    // {
+    //     if (parent::beforeSave($insert)) {
+    //         if ($this->isNewRecord) {
+    //             $this->auth_key = \Yii::$app->security->generateRandomString();
+    //         }
+    //         return true;
+    //     }
+    //     return false;
+    // }
 }

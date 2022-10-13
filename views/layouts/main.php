@@ -33,9 +33,9 @@ $this->registerCsrfMetaTags();
 		<?= Nav::widget([
 			'options' => ['class' => 'navbar-nav ms-auto'],
 			'items' => [
-				Yii::$app->user->isGuest ?
-					['label' => 'Вход', 'url' => ['/user/signin']] :
-					['label' => 'Выход (' . Yii::$app->user->identity->username . ')', 'url' => ['/user/signout']],
+				['label' => 'Регистрация', 'url' => ['/user/signup'], 'visible' => Yii::$app->user->isGuest===true],
+				['label' => 'Вход', 'url' => ['/user/signin'], 'visible' => Yii::$app->user->isGuest===true],
+				['label' => 'Выход', 'url' => ['/user/signout'], 'visible' => Yii::$app->user->isGuest===false],
 			]
 		]) ?>
 		<?php NavBar::end(); ?>
