@@ -32,6 +32,7 @@
     .img_login{
         width: 250px;
     }
+<<<<<<< HEAD
     .form-shrink-0{
         
     }
@@ -45,4 +46,10 @@
         margin-right: auto;
         max-width: 450px;
         
+=======
+    .content_container{
+        position: relative;
+        top: 90px;
+        left: 500px;
+>>>>>>> 342ba97a64107692d84e5054d61ff6a04e9973b2
     }
