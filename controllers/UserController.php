@@ -6,6 +6,7 @@ use Yii;
 use yii\web\Controller;
 use yii\filters\AccessControl;
 use app\models\Signin;
+use app\models\User;
 
 class UserController extends Controller
 {
@@ -14,10 +15,10 @@ class UserController extends Controller
 		return [
 			'access' => [
 				'class' => AccessControl::className(),
-				'only' => ['signin', 'signout'],
+				'only' => ['signup', 'signin', 'signout'],
 				'rules' => [
 					[
-						'actions' => ['signin'],
+						'actions' => ['signup', 'signin'],
 						'allow' => true,
 						'roles' => ['?'],
 					],
@@ -29,6 +30,25 @@ class UserController extends Controller
 				],
 			],
 		];
+	}
+
+	public function actionIndex()
+	{
+		return $this->render('index');
+	}
+
+	public function actionSignup()
+	{
+		$model = new User();
+		if ($this->request->isPost) {
+			if ($model->load($this->request->post()) && $model->save() && $model->login()) {
+				return $this->goBack();
+			}
+		} else {
+			$model->loadDefaultValues();
+		}
+
+		return $this->render('signup', ['model' => $model]);
 	}
 
 	public function actionSignin()

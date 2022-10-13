@@ -1,26 +1,39 @@
 
-let flag = false;
+// function bg_sun(){
+//     document.body.style.backgroundColor = 'white';
+//     document.getElementById("loginform-username").style.backgroundColor = 'white';
+//     document.getElementById("loginform-password").style.backgroundColor = 'white'; 
+// }
+// function bg_mun(){
+//     document.body.style.backgroundColor = 'gray';
+//     document.getElementById("loginform-username").style.backgroundColor = 'gray'; 
+//     document.getElementById("loginform-password").style.backgroundColor = 'gray'; 
+// }
 
-function changeTheme(element) {
-	element.innerText = (flag = !flag) ? 'Вкл.' : 'Выкл.';
 
-	if (element.classList.contains(flag ? 'btn-white' : 'btn-dark')) {
-		element.classList.remove(flag ? 'btn-white' : 'btn-dark');
-		element.classList.add(flag ? 'btn-dark' : 'btn-white');
-	}
 
-	let elements = document.body.getElementsByTagName('*');
-	for (let index = 0; index < elements.length; index++) {
-		const item = elements[index];
+//     function a()
+//     {document.getElementById('info').innerHTML = '' + 'drftghjk';}
+//     function b()
+//     {document.getElementById('info').innerHTML = 'kod6';}   
 
-		if (item.classList.contains(flag ? 'bg-light' : 'bg-dark')) {
-			item.classList.remove(flag ? 'bg-light' : 'bg-dark');
-			item.classList.add(flag ? 'bg-dark' : 'bg-light');
-		}
+//     document.getElementById('sun_btn').addEventListener('click', function(e) {
+//   let l = document.createElement('img');
+//   l.classList.add("img_login");
+// //   l.style.width='250px';
 
-		if (item.classList.contains(flag ? 'navbar-light' : 'navbar-dark')) {
-			item.classList.remove(flag ? 'navbar-light' : 'navbar-dark');
-			item.classList.add(flag ? 'navbar-dark' : 'navbar-light');
-		}
-	}
-}
+
+
+
+//     let flag = false;
+//   let elemnt1 = document.getElementById('unique');
+//   elemnt1.innerHTML = '<img src="../uploads/sun.png">';
+//   element1.addEventListener('click', function() {
+//     elemnt1.innerHTML= (flag=!flag)?'787576756':'545656';
+
+//   });
+ 
+// // document.body.appendChild(l);
+//  // e.stopPropagation();
+//  //document.body.innerHTML = '123456';s
+// });  

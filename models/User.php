@@ -3,40 +3,42 @@
 namespace app\models;
 
 use Yii;
-use yii\base\BaseObject;
+use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
-class User extends BaseObject implements IdentityInterface
+class User extends ActiveRecord implements IdentityInterface
 {
-	public $id;
-	public $username;
-	public $password;
+	public static function tableName()
+	{
+		return 'user';
+	}
 
-	private static $users = [
-		'1' => [
-			'id' => '1',
-			'username' => 'admin',
-			'password' => 'admin',
-		],
-	];
+	public function rules()
+	{
+		return [
+			[['login', 'password', 'name'], 'required'],
+			[['login', 'password', 'name'], 'string', 'max' => 255],
+			[['login'], 'unique'],
+		];
+	}
+
+	public function attributeLabels()
+	{
+		return [
+			'id' => 'ID',
+			'login' => 'Логин',
+			'password' => 'Пароль',
+			'name' => 'Имя',
+		];
+	}
 
 	public static function findIdentity($id)
 	{
-		return isset(self::$users[$id]) ? new static(self::$users[$id]) : null;
+		return static::findOne($id);
 	}
 
 	public static function findIdentityByAccessToken($token, $type = null)
 	{
-		return null;
-	}
-
-	public static function findByUsername($username)
-	{
-		foreach (self::$users as $user) {
-			if (strcasecmp($user['username'], $username) === 0) {
-				return new static($user);
-			}
-		}
 		return null;
 	}
 
@@ -57,6 +59,27 @@ class User extends BaseObject implements IdentityInterface
 
 	public function validatePassword($password)
 	{
-		return $this->password === $password;
+		return $this->password === md5($password);
+	}
+
+	public static function findByLogin($login)
+	{
+		return self::find()->where(['login' => $login])->one();
+	}
+
+	public function beforeSave($insert)
+	{
+		if ($this->isNewRecord) {
+			$this->password = md5($this->password);
+		}
+		return parent::beforeSave($insert);
+	}
+
+	public function login()
+	{
+		if ($this->validate()) {
+			return Yii::$app->user->login($this, 3600 * 24 * 30);
+		}
+		return false;
 	}
 }

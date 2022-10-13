@@ -7,16 +7,16 @@ use yii\base\Model;
 
 class Signin extends Model
 {
-	public $username;
+	public $login;
 	public $password;
 	public $rememberMe = false;
 
-	private $_user = false;
+	private $user = false;
 
 	public function rules()
 	{
 		return [
-			[['username', 'password'], 'required'],
+			[['login', 'password'], 'required'],
 			['rememberMe', 'boolean'],
 			['password', 'validatePassword'],
 		];
@@ -25,7 +25,7 @@ class Signin extends Model
 	public function attributeLabels()
 	{
 		return [
-			'username' => 'Логин',
+			'login' => 'Логин',
 			'password' => 'Пароль',
 			'rememberMe' => 'Запомнить меня',
 		];
@@ -52,10 +52,9 @@ class Signin extends Model
 
 	public function getUser()
 	{
-		if ($this->_user === false) {
-			$this->_user = User::findByUsername($this->username);
+		if ($this->user === false) {
+			$this->user = User::findByLogin($this->login);
 		}
-
-		return $this->_user;
+		return $this->user;
 	}
 }

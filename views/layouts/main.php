@@ -7,9 +7,12 @@ use yii\bootstrap5\NavBar;
 
 AppAsset::register($this);
 
+$this->registerCsrfMetaTags();
 $this->registerMetaTag(['charset' => Yii::$app->charset], 'charset');
 $this->registerMetaTag(['name' => 'viewport', 'content' => 'width=device-width, initial-scale=1, shrink-to-fit=no']);
-$this->registerCsrfMetaTags();
+$this->registerMetaTag(['name' => 'description', 'content' => $this->params['meta_description'] ?? '']);
+$this->registerMetaTag(['name' => 'keywords', 'content' => $this->params['meta_keywords'] ?? '']);
+$this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii::getAlias('@web/favicon.ico')]);
 ?>
 
 <?php $this->beginPage() ?>
@@ -33,9 +36,16 @@ $this->registerCsrfMetaTags();
 		<?= Nav::widget([
 			'options' => ['class' => 'navbar-nav ms-auto'],
 			'items' => [
-				Yii::$app->user->isGuest ?
-					['label' => 'Вход', 'url' => ['/user/signin']] :
-					['label' => 'Выход (' . Yii::$app->user->identity->username . ')', 'url' => ['/user/signout']],
+				['label' => 'Регистрация', 'url' => ['/user/signup'], 'visible' => Yii::$app->user->isGuest],
+				['label' => 'Вход', 'url' => ['/user/signin'], 'visible' => Yii::$app->user->isGuest],
+				[
+					'label' => (Yii::$app->user->isGuest ? 'Unknown' : Yii::$app->user->identity->name),
+					'items' => [
+						['label' => 'Профиль', 'url' => ['/user/index']],
+						['label' => 'Выход', 'url' => ['/user/signout']],
+					],
+					'visible' => !Yii::$app->user->isGuest
+				],
 			]
 		]) ?>
 		<?php NavBar::end(); ?>
