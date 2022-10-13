@@ -14,9 +14,9 @@
     }
     .content_login{
         background: rgb(255, 255, 255);
-      position: relative;
-    bottom: 150px;
-      width: 500px;
+        position: relative;
+        bottom: 150px;
+        width: 500px;
     }
     .section_btn-login{
         position: relative;
@@ -31,4 +31,18 @@
     }
     .img_login{
         width: 250px;
+    }
+    .form-shrink-0{
+        
+    }
+    .form-control{
+        
+    }
+    .user-form{
+        justify-content: center;
+        align-items: center;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 450px;
+        
     }
