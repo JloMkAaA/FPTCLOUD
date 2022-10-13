@@ -12,9 +12,10 @@ $this->title = 'Вход';
 
 ?>
 <div class="site-login">
+    <div class="content_container">
     <button style=" background:transparent; background-image: url(../uploads/sun.png); width:50px; height:50px;  background-repeat: no-repeat; border:0;" id="sun_btn" onclick="bg_sun()"></button>
     <button style=" background:transparent; background-image: url(../uploads/moon.png); width:50px; height:50px;  background-repeat: no-repeat; border:0;" id="muun_mtn" onclick="bg_mun()" ></button>
-
+    </div>
     <h1><?= Html::encode($this->title) ?></h1>
  
     <?php $form = ActiveForm::begin([
@@ -57,8 +58,9 @@ $this->title = 'Вход';
   
 
 </head>
-<body>
+ <body>
+<!--    
 <input type="button" value="Hello!" name="hello" OnClick="a();">
 <input type="button" value="Hello!" name="hello" OnClick="b();">
-<div id="info"></div>
+<div id="info"></div> -->
 </div>

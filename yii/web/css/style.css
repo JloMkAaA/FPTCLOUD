@@ -32,3 +32,8 @@
     .img_login{
         width: 250px;
     }
+    .content_container{
+        position: relative;
+        top: 90px;
+        left: 500px;
+    }
