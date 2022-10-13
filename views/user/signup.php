@@ -1,23 +1,24 @@
 <?php
 
-use yii\helpers\Html;
-use yii\widgets\ActiveForm;
+use yii\bootstrap5\Html;
+use yii\bootstrap5\ActiveForm;
 
-/* @var $this yii\web\View */
-/* @var $model app\models\User */
-/* @var $form ActiveForm */
+$this->title = 'Регистрация';
 ?>
-<div class="user-signup">
 
-    <?php $form = ActiveForm::begin(); ?>
+<div class="container">
+	<div class="row">
+		<div class="col-md-8 offset-md-2">
+			<div class="border rounded my-3 p-3 bg-light">
+				<h1><?= Html::encode($this->title) ?></h1>
 
-        <?= $form->field($model, 'login')->textInput(['autofocus' => true]) ?>
-        <?= $form->field($model, 'password')->passwordInput() ?>
-        <?= $form->field($model, 'fio') ?>
-    
-        <div class="form-group">
-            <?= Html::submitButton('Зарегистрироваться', ['class' => 'btn btn-primary']) ?>
-        </div>
-    <?php ActiveForm::end(); ?>
-
-</div><!-- user-signup -->
+				<?php $form = ActiveForm::begin(); ?>
+                <?= $form->field($model, 'login')->textInput(['autofocus' => true]) ?>
+                <?= $form->field($model, 'password')->passwordInput() ?>
+                <?= $form->field($model, 'fio')->textInput() ?>
+                <div class="form-group"><?= Html::submitButton('Зарегистрироваться', ['class' => 'btn btn-success']) ?></div>
+                <?php ActiveForm::end(); ?> 
+			</div>
+		</div>
+	</div>
+</div>
