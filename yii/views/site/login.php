@@ -46,16 +46,15 @@ $this->title = 'Вход';
         </div>
      
     <?php ActiveForm::end(); ?>
+    <div id="unique">
+
+    </div>
     <section class="content_login">
     </section>
    <style>
 
    </style>
-   <script>
-
-   </script>
-   <script>
-</script>
+  
 
 </head>
 <body>
