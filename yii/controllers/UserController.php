@@ -73,7 +73,7 @@ class UserController extends Controller
 
         if ($this->request->isPost) {
             if ($model->load($this->request->post()) && $model->save()) {
-                return $this->redirect(Url::toRoute('site/index', $schema = true));
+                return $this->redirect(Url::toRoute(['site/index']));
             }
         } else {
             $model->loadDefaultValues();
