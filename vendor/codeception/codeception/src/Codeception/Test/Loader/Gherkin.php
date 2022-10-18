@@ -1,14 +1,10 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Test\Loader;
 
 use Behat\Gherkin\Filter\RoleFilter;
 use Behat\Gherkin\Keywords\ArrayKeywords as GherkinKeywords;
 use Behat\Gherkin\Lexer as GherkinLexer;
 use Behat\Gherkin\Node\ExampleNode;
-use Behat\Gherkin\Node\FeatureNode;
 use Behat\Gherkin\Node\OutlineNode;
 use Behat\Gherkin\Node\ScenarioInterface;
 use Behat\Gherkin\Node\ScenarioNode;
@@ -16,31 +12,12 @@ use Behat\Gherkin\Parser as GherkinParser;
 use Codeception\Configuration;
 use Codeception\Exception\ParseException;
 use Codeception\Exception\TestParseException;
-use Codeception\Lib\Generator\Shared\Classname;
 use Codeception\Test\Gherkin as GherkinFormat;
 use Codeception\Util\Annotation;
-use ReflectionClass;
-
-use function array_keys;
-use function array_map;
-use function array_merge;
-use function class_exists;
-use function dirname;
-use function file_get_contents;
-use function get_class_methods;
-use function glob;
-use function implode;
-use function preg_match;
-use function preg_quote;
-use function preg_replace;
-use function sprintf;
-use function str_replace;
 
 class Gherkin implements LoaderInterface
 {
-    use Classname;
-
-    protected static array $defaultSettings = [
+    protected static $defaultSettings = [
         'namespace' => '',
         'actor' => '',
         'gherkin' => [
@@ -52,28 +29,24 @@ class Gherkin implements LoaderInterface
         ]
     ];
 
-    /**
-     * @var GherkinFormat[]
-     */
-    protected array $tests = [];
-
-    protected GherkinParser $parser;
-
-    protected array $settings = [];
-
-    protected array $steps = [];
+    protected $tests = [];
 
     /**
-     * @param array<string, mixed> $settings
-     * @throws TestParseException
+     * @var GherkinParser
      */
-    public function __construct(array $settings = [])
+    protected $parser;
+
+    protected $settings = [];
+
+    protected $steps = [];
+
+    public function __construct($settings = [])
     {
         $this->settings = Configuration::mergeConfigs(self::$defaultSettings, $settings);
-        if (!class_exists(GherkinKeywords::class)) {
+        if (!class_exists('Behat\Gherkin\Keywords\ArrayKeywords')) {
             throw new TestParseException('Feature file can only be parsed with Behat\Gherkin library. Please install `behat/gherkin` with Composer');
         }
-        $gherkin = new ReflectionClass(\Behat\Gherkin\Gherkin::class);
+        $gherkin = new \ReflectionClass('Behat\Gherkin\Gherkin');
         $gherkinClassPath = dirname($gherkin->getFileName());
         $i18n = require $gherkinClassPath . '/../../../i18n.php';
         $keywords = new GherkinKeywords($i18n);
@@ -82,28 +55,28 @@ class Gherkin implements LoaderInterface
         $this->fetchGherkinSteps();
     }
 
-    protected function fetchGherkinSteps(): void
+    protected function fetchGherkinSteps()
     {
         $contexts = $this->settings['gherkin']['contexts'];
 
         foreach ($contexts['tag'] as $tag => $tagContexts) {
-            $this->addSteps($tagContexts, "tag:{$tag}");
+            $this->addSteps($tagContexts, "tag:$tag");
         }
         foreach ($contexts['role'] as $role => $roleContexts) {
-            $this->addSteps($roleContexts, "role:{$role}");
+            $this->addSteps($roleContexts, "role:$role");
         }
 
         if (empty($this->steps) && empty($contexts['default']) && $this->settings['actor']) { // if no context is set, actor to be a context
-            $actorContext = $this->supportNamespace() . $this->settings['actor'];
+            $actorContext = $this->settings['namespace']
+                ? rtrim($this->settings['namespace'], '\\') . '\\' . rtrim($this->settings['actor'], '\\')
+                : $this->settings['actor'];
             if ($actorContext) {
                 $contexts['default'][] = $actorContext;
             }
         }
 
-        if (
-            isset($this->settings['gherkin']['contexts']['path']) &&
-            isset($this->settings['gherkin']['contexts']['namespace_prefix'])
-        ) {
+        if (isset($this->settings['gherkin']['contexts']['path']) &&
+            isset($this->settings['gherkin']['contexts']['namespace_prefix'])) {
             $files = glob($this->settings['gherkin']['contexts']['path'] . '/*/*.php');
 
             // Strip off include path
@@ -111,29 +84,25 @@ class Gherkin implements LoaderInterface
 
             // Add namespace prefix
             $namespace = $this->settings['gherkin']['contexts']['namespace_prefix'];
-            $dynamicContexts = array_map(fn ($path): string => $namespace . $path, $files);
+            $dynamicContexts = array_map(function ($path) use ($namespace) {
+                return $namespace . $path;
+            }, $files);
 
-            $this->addSteps($dynamicContexts);
+            $this->addSteps($dynamicContexts, 'default');
         }
 
         $this->addSteps($contexts['default']);
     }
 
-    protected function addSteps(array $contexts, string $group = 'default'): void
+    protected function addSteps(array $contexts, $group = 'default')
     {
         if (!isset($this->steps[$group])) {
             $this->steps[$group] = [];
         }
 
         foreach ($contexts as $context) {
-            if (is_string($context) && !class_exists($context)) {
-                throw new \InvalidArgumentException(
-                    sprintf("Context class %s does not exist", $context)
-                );
-            }
-            $methods = get_class_methods((new \ReflectionClass($context))->newInstanceWithoutConstructor());
-
-            if ($methods === []) {
+            $methods = get_class_methods($context);
+            if (!$methods) {
                 continue;
             }
             foreach ($methods as $method) {
@@ -153,16 +122,16 @@ class Gherkin implements LoaderInterface
         }
     }
 
-    public function makePlaceholderPattern(string $pattern): string
+    public function makePlaceholderPattern($pattern)
     {
         if (isset($this->settings['describe_steps'])) {
             return $pattern;
         }
-        if (!str_starts_with($pattern, '/')) {
+        if (strpos($pattern, '/') !== 0) {
             $pattern = preg_quote($pattern);
 
-            $pattern = preg_replace('#(\w+)/(\w+)#', '(?:$1|$2)', $pattern); // or
-            $pattern = preg_replace('#\\\\\((\w)\\\\\)#', '$1?', $pattern); // (s)
+            $pattern = preg_replace('~(\w+)\/(\w+)~', '(?:$1|$2)', $pattern); // or
+            $pattern = preg_replace('~\\\\\((\w)\\\\\)~', '$1?', $pattern); // (s)
 
             $replacePattern = sprintf(
                 '(?|\"%s\"|%s)',
@@ -171,61 +140,55 @@ class Gherkin implements LoaderInterface
             ); // or matching numbers with optional $ or € chars
 
             // params converting from :param to match 11 and "aaa" and "aaa\"aaa"
-            $pattern = preg_replace('#"?\\\:(\w+)"?#', $replacePattern, $pattern);
-            $pattern = "#^{$pattern}$#u";
+            $pattern = preg_replace('~"?\\\:(\w+)"?~', $replacePattern, $pattern);
+            $pattern = "/^$pattern$/u";
             // validating this pattern is slow, so we skip it now
         }
         return $pattern;
     }
 
-    private function validatePattern(string $pattern): void
+    private function validatePattern($pattern)
     {
-        if (!str_starts_with($pattern, '/')) {
+        if (strpos($pattern, '/') !== 0) {
             return; // not a user-regex but a string with placeholder
         }
         if (@preg_match($pattern, ' ') === false) {
-            throw new ParseException("Loading Gherkin step with regex\n \n{$pattern}\n \nfailed. This regular expression is invalid.");
+            throw new ParseException("Loading Gherkin step with regex\n \n$pattern\n \nfailed. This regular expression is invalid.");
         }
     }
 
-    public function loadTests(string $filename): void
+    public function loadTests($filename)
     {
         $featureNode = $this->parser->parse(file_get_contents($filename), $filename);
 
-        if (!$featureNode instanceof FeatureNode) {
+        if (!$featureNode) {
             return;
         }
 
         foreach ($featureNode->getScenarios() as $scenarioNode) {
-            /** @var ScenarioInterface $scenarioNode */
+            /** @var $scenarioNode ScenarioInterface * */
             $steps = $this->steps['default']; // load default context
 
             foreach (array_merge($scenarioNode->getTags(), $featureNode->getTags()) as $tag) { // load tag contexts
-                if (isset($this->steps["tag:{$tag}"])) {
-                    $steps = array_merge($steps, $this->steps["tag:{$tag}"]);
+                if (isset($this->steps["tag:$tag"])) {
+                    $steps = array_merge($steps, $this->steps["tag:$tag"]);
                 }
             }
 
             $roles = $this->settings['gherkin']['contexts']['role']; // load role contexts
-            foreach (array_keys($roles) as $role) {
+            foreach ($roles as $role => $context) {
                 $filter = new RoleFilter($role);
                 if ($filter->isFeatureMatch($featureNode)) {
-                    $steps = array_merge($steps, $this->steps["role:{$role}"]);
+                    $steps = array_merge($steps, $this->steps["role:$role"]);
                     break;
                 }
             }
 
             if ($scenarioNode instanceof OutlineNode) {
                 foreach ($scenarioNode->getExamples() as $example) {
-                    /** @var ExampleNode $example */
+                    /** @var $example ExampleNode  **/
                     $params = implode(', ', $example->getTokens());
-                    $exampleNode = new ScenarioNode(
-                        $scenarioNode->getTitle() . " | {$params}",
-                        $scenarioNode->getTags(),
-                        $example->getSteps(),
-                        $example->getKeyword(),
-                        $example->getLine()
-                    );
+                    $exampleNode = new ScenarioNode($scenarioNode->getTitle() . " | $params", $scenarioNode->getTags(), $example->getSteps(), $example->getKeyword(), $example->getLine());
                     $this->tests[] = new GherkinFormat($featureNode, $exampleNode, $steps);
                 }
                 continue;
@@ -234,20 +197,20 @@ class Gherkin implements LoaderInterface
         }
     }
 
-    /**
-     * @return GherkinFormat[]
-     */
-    public function getTests(): array
+    public function getTests()
     {
         return $this->tests;
     }
 
-    public function getPattern(): string
+    public function getPattern()
     {
         return '~\.feature$~';
     }
 
-    public function getSteps(): array
+    /**
+     * @return array
+     */
+    public function getSteps()
     {
         return $this->steps;
     }

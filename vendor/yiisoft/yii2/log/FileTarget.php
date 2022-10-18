@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\log;
@@ -20,16 +20,13 @@ use yii\helpers\FileHelper;
  * files are moved backwards by one place, i.e., '.2' to '.3', '.1' to '.2', and so on.
  * The property [[maxLogFiles]] specifies how many history files to keep.
  *
- * Since 2.0.46 rotation of the files is done only by copy and the
- * `rotateByCopy` property is deprecated.
- *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
  */
 class FileTarget extends Target
 {
     /**
-     * @var string|null log file path or [path alias](guide:concept-aliases). If not set, it will use the "@runtime/logs/app.log" file.
+     * @var string log file path or [path alias](guide:concept-aliases). If not set, it will use the "@runtime/logs/app.log" file.
      * The directory containing the log files will be automatically created if not existing.
      */
     public $logFile;
@@ -49,7 +46,7 @@ class FileTarget extends Target
      */
     public $maxLogFiles = 5;
     /**
-     * @var int|null the permission to be set for newly created log files.
+     * @var int the permission to be set for newly created log files.
      * This value will be used by PHP chmod() function. No umask will be applied.
      * If not set, the permission will be determined by the current environment.
      */
@@ -63,7 +60,7 @@ class FileTarget extends Target
     public $dirMode = 0775;
     /**
      * @var bool Whether to rotate log files by copy and truncate in contrast to rotation by
-     * renaming files. Defaults to `true` to be more compatible with log tailers and windows
+     * renaming files. Defaults to `true` to be more compatible with log tailers and is windows
      * systems which do not play well with rename on open files. Rotation by renaming however is
      * a bit faster.
      *
@@ -71,9 +68,7 @@ class FileTarget extends Target
      * function does not work with files that are opened by some process is described in a
      * [comment by Martin Pelletier](https://www.php.net/manual/en/function.rename.php#102274) in
      * the PHP documentation. By setting rotateByCopy to `true` you can work
-     * around this.
-     * @deprecated since 2.0.46 and setting it to false has no effect anymore
-     * since rotating is now always done by copy.
+     * around this problem.
      */
     public $rotateByCopy = true;
 
@@ -122,21 +117,31 @@ class FileTarget extends Target
             clearstatcache();
         }
         if ($this->enableRotation && @filesize($this->logFile) > $this->maxFileSize * 1024) {
+            @flock($fp, LOCK_UN);
+            @fclose($fp);
             $this->rotateFiles();
+            $writeResult = @file_put_contents($this->logFile, $text, FILE_APPEND | LOCK_EX);
+            if ($writeResult === false) {
+                $error = error_get_last();
+                throw new LogRuntimeException("Unable to export log through file ({$this->logFile})!: {$error['message']}");
+            }
+            $textSize = strlen($text);
+            if ($writeResult < $textSize) {
+                throw new LogRuntimeException("Unable to export whole log through file ({$this->logFile})! Wrote $writeResult out of $textSize bytes.");
+            }
+        } else {
+            $writeResult = @fwrite($fp, $text);
+            if ($writeResult === false) {
+                $error = error_get_last();
+                throw new LogRuntimeException("Unable to export log through file ({$this->logFile})!: {$error['message']}");
+            }
+            $textSize = strlen($text);
+            if ($writeResult < $textSize) {
+                throw new LogRuntimeException("Unable to export whole log through file ({$this->logFile})! Wrote $writeResult out of $textSize bytes.");
+            }
+            @flock($fp, LOCK_UN);
+            @fclose($fp);
         }
-        $writeResult = @fwrite($fp, $text);
-        if ($writeResult === false) {
-            $error = error_get_last();
-            throw new LogRuntimeException("Unable to export log through file ({$this->logFile})!: {$error['message']}");
-        }
-        $textSize = strlen($text);
-        if ($writeResult < $textSize) {
-            throw new LogRuntimeException("Unable to export whole log through file ({$this->logFile})! Wrote $writeResult out of $textSize bytes.");
-        }
-        @fflush($fp);
-        @flock($fp, LOCK_UN);
-        @fclose($fp);
-
         if ($this->fileMode !== null) {
             @chmod($this->logFile, $this->fileMode);
         }
@@ -158,7 +163,7 @@ class FileTarget extends Target
                     continue;
                 }
                 $newFile = $this->logFile . '.' . ($i + 1);
-                $this->rotateByCopy($rotateFile, $newFile);
+                $this->rotateByCopy ? $this->rotateByCopy($rotateFile, $newFile) : $this->rotateByRename($rotateFile, $newFile);
                 if ($i === 0) {
                     $this->clearLogFile($rotateFile);
                 }
@@ -189,5 +194,15 @@ class FileTarget extends Target
         if ($this->fileMode !== null) {
             @chmod($newFile, $this->fileMode);
         }
+    }
+
+    /**
+     * Renames rotated file into new file
+     * @param string $rotateFile
+     * @param string $newFile
+     */
+    private function rotateByRename($rotateFile, $newFile)
+    {
+        @rename($rotateFile, $newFile);
     }
 }

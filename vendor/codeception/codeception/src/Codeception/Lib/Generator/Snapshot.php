@@ -1,23 +1,15 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Generator;
 
-use Codeception\Lib\Generator\Shared\Classname;
 use Codeception\Util\Shared\Namespaces;
 use Codeception\Util\Template;
 
 class Snapshot
 {
     use Namespaces;
-    use Classname;
 
-    protected string $template = <<<EOF
+    protected $template = <<<EOF
 <?php
-
-declare(strict_types=1);
-
 namespace {{namespace}};
 
 class {{name}} extends \\Codeception\\Snapshot
@@ -30,10 +22,9 @@ class {{name}} extends \\Codeception\\Snapshot
         // TODO: return a value which will be used for snapshot 
     }
 }
-
 EOF;
 
-    protected string $actionsTemplate = <<<EOF
+    protected $actionsTemplate = <<<EOF
     /**
      * @var \\{{actorClass}};
      */
@@ -45,17 +36,18 @@ EOF;
     }
 EOF;
 
-    protected string $namespace;
+    protected $namespace;
+    protected $name;
+    protected $settings;
 
-    protected string $name;
-
-    public function __construct(protected array $settings, string $name)
+    public function __construct($settings, $name)
     {
+        $this->settings = $settings;
         $this->name = $this->getShortClassName($name);
-        $this->namespace = $this->getNamespaceString($this->supportNamespace() . 'Snapshot\\' . $name);
+        $this->namespace = $this->getNamespaceString($this->settings['namespace'] . '\\Snapshot\\' . $name);
     }
 
-    public function produce(): string
+    public function produce()
     {
         return (new Template($this->template))
             ->place('namespace', $this->namespace)
@@ -64,14 +56,17 @@ EOF;
             ->produce();
     }
 
-    protected function produceActions(): string
+    protected function produceActions()
     {
         if (!isset($this->settings['actor'])) {
             return ''; // no actor in suite
         }
 
         $actor = lcfirst($this->settings['actor']);
-        $actorClass = rtrim($this->supportNamespace(), '\\') . $this->settings['actor'];
+        $actorClass = $this->settings['actor'];
+        if (!empty($this->settings['namespace'])) {
+            $actorClass = rtrim($this->settings['namespace'], '\\') . '\\' . $actorClass;
+        }
 
         return (new Template($this->actionsTemplate))
             ->place('actorClass', $actorClass)

@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Lib\Generator\Cest as CestGenerator;
@@ -9,8 +6,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function file_exists;
 
 /**
  * Generates Cest (scenario-driven object-oriented test) file:
@@ -23,10 +18,10 @@ use function file_exists;
  */
 class GenerateCest extends Command
 {
-    use Shared\FileSystemTrait;
-    use Shared\ConfigTrait;
+    use Shared\FileSystem;
+    use Shared\Config;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition([
             new InputArgument('suite', InputArgument::REQUIRED, 'suite where tests will be put'),
@@ -34,12 +29,12 @@ class GenerateCest extends Command
         ]);
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Generates empty Cest file in suite';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
         $suite = $input->getArgument('suite');
         $class = $input->getArgument('class');
@@ -52,17 +47,17 @@ class GenerateCest extends Command
         $filename = $path . $filename;
 
         if (file_exists($filename)) {
-            $output->writeln("<error>Test {$filename} already exists</error>");
+            $output->writeln("<error>Test $filename already exists</error>");
             return 1;
         }
-        $cest = new CestGenerator($class, $config);
-        $res = $this->createFile($filename, $cest->produce());
+        $gen = new CestGenerator($class, $config);
+        $res = $this->createFile($filename, $gen->produce());
         if (!$res) {
-            $output->writeln("<error>Test {$filename} already exists</error>");
+            $output->writeln("<error>Test $filename already exists</error>");
             return 1;
         }
 
-        $output->writeln("<info>Test was created in {$filename}</info>");
+        $output->writeln("<info>Test was created in $filename</info>");
         return 0;
     }
 }

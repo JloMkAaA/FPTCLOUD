@@ -1,31 +1,10 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Util;
 
 use ReflectionException;
-use ReflectionMethod;
-use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionProperty;
-
-use function array_filter;
-use function array_keys;
-use function array_map;
-use function array_pop;
-use function count;
-use function explode;
-use function get_class;
-use function implode;
-use function in_array;
-use function is_array;
-use function is_null;
-use function is_string;
-use function json_encode;
-use function method_exists;
-use function range;
-use function var_export;
+use ReflectionMethod;
 
 /**
  * This class contains helper methods to help with common Reflection tasks.
@@ -35,9 +14,13 @@ class ReflectionHelper
     /**
      * Read a private property of an object.
      *
+     * @param object $object
+     * @param string $property
+     * @param string|null $class
+     * @return mixed
      * @throws ReflectionException
      */
-    public static function readPrivateProperty(object $object, string $property, string $class = null): mixed
+    public static function readPrivateProperty($object, $property, $class = null)
     {
         if (is_null($class)) {
             $class = $object;
@@ -50,28 +33,16 @@ class ReflectionHelper
     }
 
     /**
-     * Set a private property of an object.
-     *
-     * @throws ReflectionException
-     */
-    public static function setPrivateProperty(object $object, string $property, $value, string $class = null): void
-    {
-        if (is_null($class)) {
-            $class = $object;
-        }
-
-        $property = new ReflectionProperty($class, $property);
-        $property->setAccessible(true);
-
-        $property->setValue($object, $value);
-    }
-
-    /**
      * Invoke a private method of an object.
      *
+     * @param object $object
+     * @param string $method
+     * @param array $args
+     * @param string|null $class
+     * @return mixed
      * @throws ReflectionException
      */
-    public static function invokePrivateMethod(object $object, string $method, array $args = [], string $class = null): mixed
+    public static function invokePrivateMethod($object, $method, $args = [], $class = null)
     {
         if (is_null($class)) {
             $class = $object;
@@ -87,25 +58,41 @@ class ReflectionHelper
      * Returns class name without namespace
      *
      * (does not use reflection actually)
+     *
+     * @param $object
+     * @return mixed
      */
-    public static function getClassShortName(object $object): string
+    public static function getClassShortName($object)
     {
         $path = explode('\\', get_class($object));
         return array_pop($path);
     }
 
-    public static function getClassFromParameter(ReflectionParameter $parameter): ?string
+    /**
+     * Adapted from https://github.com/Behat/Behat/pull/1313
+     *
+     * @param ReflectionParameter $parameter
+     * @return string|null
+     */
+    public static function getClassFromParameter(ReflectionParameter $parameter)
     {
+        if (PHP_VERSION_ID < 70100) {
+            $class = $parameter->getClass();
+            if ($class !== null) {
+                return $class->name;
+            }
+            return $class;
+        }
+
         $type = $parameter->getType();
-        if (!$type instanceof ReflectionNamedType || $type->isBuiltin()) {
+        if ($type === null || $type->isBuiltin()) {
             return null;
         }
         $typeString = $type->getName();
+
         if ($typeString === 'self') {
             return $parameter->getDeclaringClass()->getName();
-        }
-
-        if ($typeString === 'parent') {
+        } elseif ($typeString === 'parent') {
             return $parameter->getDeclaringClass()->getParentClass()->getName();
         }
 
@@ -114,17 +101,21 @@ class ReflectionHelper
 
     /**
      * Infer default parameter from the reflection object and format it as PHP (code) string
+     *
+     * @param ReflectionParameter $param
+     *
+     * @return string
      */
-    public static function getDefaultValue(ReflectionParameter $parameter): string
+    public static function getDefaultValue(ReflectionParameter $param)
     {
-        if ($parameter->isDefaultValueAvailable()) {
-            if (method_exists($parameter, 'isDefaultValueConstant') && $parameter->isDefaultValueConstant()) {
-                $constName = $parameter->getDefaultValueConstantName();
-                if (str_contains($constName, '::')) {
-                    [$class, $const] = explode('::', $constName);
+        if ($param->isDefaultValueAvailable()) {
+            if (method_exists($param, 'isDefaultValueConstant') && $param->isDefaultValueConstant()) {
+                $constName = $param->getDefaultValueConstantName();
+                if (false !== strpos($constName, '::')) {
+                    list($class, $const) = explode('::', $constName);
                     if (in_array($class, ['self', 'static'])) {
-                        $constName = '\\' . $parameter->getDeclaringClass()->getName() . '::' . $const;
-                    } elseif (!str_starts_with($class, '\\')) {
+                        $constName = '\\' . $param->getDeclaringClass()->getName() . '::' . $const;
+                    } elseif (substr($class, 0, 1) !== '\\') {
                         $constName = '\\' . $constName;
                     }
                 }
@@ -132,33 +123,56 @@ class ReflectionHelper
                 return $constName;
             }
 
-            return self::phpEncodeValue($parameter->getDefaultValue());
+            return self::phpEncodeValue($param->getDefaultValue());
         }
 
-        $type = $parameter->getType();
+        // Default to 'null' for PHP versions < 7.1.
+        if (PHP_VERSION_ID < 70100) {
+            return 'null';
+        }
+
+        $type = $param->getType();
+
         // Default to 'null' if explicitly allowed or there is no specific type hint.
-        if (!$type || $type->allowsNull() || !$type instanceof ReflectionNamedType || !$type->isBuiltin()) {
+        if (!$type || $type->allowsNull() || !$type->isBuiltin()) {
             return 'null';
         }
 
         // Default value should match the parameter type if 'null' is NOT allowed.
-        return match ($type->getName()) {
-            'string' => "''",
-            'array' => '[]',
-            'boolean' => 'false',
-            'int', 'integer', 'float', 'double', 'number', 'numeric' => '0',
-            default => 'null',
-        };
+        switch ($type->getName()) {
+            case 'string':
+                return "''";
+            case 'array':
+                return '[]';
+            case 'boolean':
+                return 'false';
+            case 'int':
+            case 'integer':
+            case 'float':
+            case 'double':
+            case 'number':
+            case 'numeric':
+                return '0';
+            default:
+                return 'null';
+        }
     }
 
-    public static function phpEncodeValue(mixed $value): string
+    /**
+     * PHP encode value
+     *
+     * @param mixed $value
+     *
+     * @return string
+     */
+    public static function phpEncodeValue($value)
     {
         if (is_array($value)) {
             return self::phpEncodeArray($value);
         }
 
         if (is_string($value)) {
-            return json_encode($value, JSON_THROW_ON_ERROR);
+            return json_encode($value);
         }
 
         return var_export($value, true);
@@ -166,21 +180,29 @@ class ReflectionHelper
 
     /**
      * Recursively PHP encode an array
+     *
+     * @param array $array
+     *
+     * @return string
      */
-    public static function phpEncodeArray(array $array): string
+    public static function phpEncodeArray(array $array)
     {
-        $isPlainArray = fn (array $value): bool => ($value === [])
-            || (
-                (array_keys($value) === range(0, count($value) - 1))
-                && ([] === array_filter(array_keys($value), 'is_string'))
+        $isPlainArray = function (array $value) {
+            return ((count($value) === 0)
+                || (
+                    (array_keys($value) === range(0, count($value) - 1))
+                    && (0 === count(array_filter(array_keys($value), 'is_string'))))
             );
+        };
 
         if ($isPlainArray($array)) {
             return '[' . implode(', ', array_map([self::class, 'phpEncodeValue'], $array)) . ']';
         }
 
         $values = array_map(
-            fn ($key): string => self::phpEncodeValue($key) . ' => ' . self::phpEncodeValue($array[$key]),
+            function ($key) use ($array) {
+                return self::phpEncodeValue($key) . ' => ' . self::phpEncodeValue($array[$key]);
+            },
             array_keys($array)
         );
 

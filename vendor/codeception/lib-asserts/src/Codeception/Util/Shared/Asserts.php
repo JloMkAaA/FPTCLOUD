@@ -1,19 +1,20 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Codeception\Util\Shared;
 
 use Codeception\PHPUnit\TestCase;
-use PHPUnit\Framework\Assert as PHPUnitAssert;
-use PHPUnit\Framework\Constraint\Constraint as PHPUnitConstraint;
+use PHPUnit\Framework\Constraint\Constraint;
 use PHPUnit\Framework\Constraint\LogicalNot;
 
 trait Asserts
 {
     use InheritedAsserts;
 
-    protected function assert(array $arguments, bool $not = false)
+    /**
+     * @param $arguments
+     * @param bool $not
+     */
+    protected function assert($arguments, $not = false)
     {
         $not = $not ? 'Not' : '';
         $method = ucfirst(array_shift($arguments));
@@ -21,13 +22,12 @@ trait Asserts
             $method = 'False';
             $not = '';
         }
-
         if (($method === 'False') && $not) {
             $method = 'True';
             $not = '';
         }
 
-        call_user_func_array([PHPUnitAssert::class, 'assert' . $not . $method], $arguments);
+        call_user_func_array(['\PHPUnit\Framework\Assert', 'assert' . $not . $method], $arguments);
     }
 
     protected function assertNot($arguments)
@@ -37,19 +37,23 @@ trait Asserts
 
     /**
      * Asserts that a file does not exist.
+     *
+     * @param string $filename
+     * @param string $message
      */
-    protected function assertFileNotExists(string $filename, string $message = '')
+    protected function assertFileNotExists($filename, $message = '')
     {
-        TestCase::assertFileDoesNotExist($filename, $message);
+        TestCase::assertFileNotExists($filename, $message);
     }
 
     /**
      * Asserts that a value is greater than or equal to another value.
      *
-     * @param mixed $expected
-     * @param mixed $actual
+     * @param $expected
+     * @param $actual
+     * @param string $message
      */
-    protected function assertGreaterOrEquals($expected, $actual, string $message = '')
+    protected function assertGreaterOrEquals($expected, $actual, $message = '')
     {
         TestCase::assertGreaterThanOrEqual($expected, $actual, $message);
     }
@@ -57,9 +61,10 @@ trait Asserts
     /**
      * Asserts that a variable is empty.
      *
-     * @param mixed $actual
+     * @param $actual
+     * @param string $message
      */
-    protected function assertIsEmpty($actual, string $message = '')
+    protected function assertIsEmpty($actual, $message = '')
     {
         TestCase::assertEmpty($actual, $message);
     }
@@ -67,36 +72,47 @@ trait Asserts
     /**
      * Asserts that a value is smaller than or equal to another value.
      *
-     * @param mixed $expected
-     * @param mixed $actual
+     * @param $expected
+     * @param $actual
+     * @param string $message
      */
-    protected function assertLessOrEquals($expected, $actual, string $message = '')
+    protected function assertLessOrEquals($expected, $actual, $message = '')
     {
         TestCase::assertLessThanOrEqual($expected, $actual, $message);
     }
 
     /**
      * Asserts that a string does not match a given regular expression.
+     *
+     * @param string $pattern
+     * @param string $string
+     * @param string $message
      */
-    protected function assertNotRegExp(string $pattern, string $string, string $message = '')
+    protected function assertNotRegExp($pattern, $string, $message = '')
     {
-        TestCase::assertDoesNotMatchRegularExpression($pattern, $string, $message);
+        TestCase::assertNotRegExp($pattern, $string, $message);
     }
 
     /**
      * Asserts that a string matches a given regular expression.
+     *
+     * @param string $pattern
+     * @param string $string
+     * @param string $message
      */
-    protected function assertRegExp(string $pattern, string $string, string $message = '')
+    protected function assertRegExp($pattern, $string, $message = '')
     {
-        TestCase::assertMatchesRegularExpression($pattern, $string, $message);
+        TestCase::assertRegExp($pattern, $string, $message);
     }
 
     /**
      * Evaluates a PHPUnit\Framework\Constraint matcher object.
      *
-     * @param mixed $value
+     * @param $value
+     * @param Constraint $constraint
+     * @param string $message
      */
-    protected function assertThatItsNot($value, PHPUnitConstraint $constraint, string $message = '')
+    protected function assertThatItsNot($value, $constraint, $message = '')
     {
         $constraint = new LogicalNot($constraint);
         TestCase::assertThat($value, $constraint, $message);

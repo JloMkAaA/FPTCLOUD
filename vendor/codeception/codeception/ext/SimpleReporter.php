@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Extension;
 
 use Codeception\Event\TestEvent;
@@ -15,17 +12,14 @@ use Codeception\Test\Descriptor;
  */
 class SimpleReporter extends Extension
 {
-    public function _initialize(): void
+    public function _initialize()
     {
+        $this->options['silent'] = false; // turn on printing for this extension
         $this->_reconfigure(['settings' => ['silent' => true]]); // turn off printing for everything else
     }
 
-    /**
-     * We are listening for events
-     *
-     * @var array<string, string>
-     */
-    public static array $events = [
+    // we are listening for events
+    public static $events = [
         Events::SUITE_BEFORE => 'beforeSuite',
         Events::TEST_END     => 'after',
         Events::TEST_SUCCESS => 'success',
@@ -33,36 +27,35 @@ class SimpleReporter extends Extension
         Events::TEST_ERROR   => 'error',
     ];
 
-    public function beforeSuite(): void
+    public function beforeSuite()
     {
-        $this->output->writeln('');
+        $this->writeln("");
     }
 
-    public function success(): void
+    public function success()
     {
-        $this->output->write('[+] ');
+        $this->write('[+] ');
     }
 
-    public function fail(): void
+    public function fail()
     {
-        $this->output->write('[-] ');
+        $this->write('[-] ');
     }
 
-    public function error(): void
+    public function error()
     {
-        $this->output->write('[E] ');
+        $this->write('[E] ');
     }
 
     // we are printing test status and time taken
-    public function after(TestEvent $event): void
+    public function after(TestEvent $e)
     {
-        $secondsInput = $event->getTime();
-        // See https://stackoverflow.com/q/16825240
-        $milliseconds = (int)($secondsInput * 1000);
-        $seconds = (int)($milliseconds / 1000);
+        $seconds_input = $e->getTime();
+        // stack overflow: http://stackoverflow.com/questions/16825240/how-to-convert-microtime-to-hhmmssuu
+        $seconds = (int)($milliseconds = (int)($seconds_input * 1000)) / 1000;
         $time = ($seconds % 60) . (($milliseconds === 0) ? '' : '.' . $milliseconds);
 
-        $this->output->write(Descriptor::getTestSignature($event->getTest()));
-        $this->output->writeln(' (' . $time . 's)');
+        $this->write(Descriptor::getTestSignature($e->getTest()));
+        $this->writeln(' (' . $time . 's)');
     }
 }

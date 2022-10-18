@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\caching;
@@ -99,28 +99,16 @@ abstract class Dependency extends \yii\base\BaseObject
 
     /**
      * Generates a unique hash that can be used for retrieving reusable dependency data.
-     *
      * @return string a unique hash value for this cache dependency.
      * @see reusable
      */
     protected function generateReusableHash()
     {
-        $clone = clone $this;
-        $clone->data = null; // https://github.com/yiisoft/yii2/issues/3052
-
-        try {
-            $serialized = serialize($clone);
-        } catch (\Exception $e) {
-            // unserializable properties are nulled
-            foreach ($clone as $name => $value) {
-                if (is_object($value) && $value instanceof \Closure) {
-                    $clone->{$name} = null;
-                }
-            }
-            $serialized = serialize($clone);
-        }
-
-        return sha1($serialized);
+        $data = $this->data;
+        $this->data = null;  // https://github.com/yiisoft/yii2/issues/3052
+        $key = sha1(serialize($this));
+        $this->data = $data;
+        return $key;
     }
 
     /**

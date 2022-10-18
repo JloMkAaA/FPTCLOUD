@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\data;
@@ -80,7 +80,7 @@ class SqlDataProvider extends BaseDataProvider
      */
     public $params = [];
     /**
-     * @var string|callable|null the column that is used as the key of the data models.
+     * @var string|callable the column that is used as the key of the data models.
      * This can be either a column name, or a callable that returns the key value of a given data model.
      *
      * If this is not set, the keys of the [[models]] array will be used.

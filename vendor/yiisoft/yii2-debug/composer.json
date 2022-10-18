@@ -29,7 +29,8 @@
     "require": {
         "php": ">=5.4",
         "ext-mbstring": "*",
-        "yiisoft/yii2": "~2.0.13"
+        "yiisoft/yii2": "~2.0.13",
+        "opis/closure": "^3.3"
     },
     "require-dev": {
         "yiisoft/yii2-swiftmailer": "*",
@@ -58,8 +59,7 @@
             },
             "phpunit/phpunit": {
                 "Fix PHP 7 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php7.patch",
-                "Fix PHP 8 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php8.patch",
-                "Fix PHP 8.1 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php81.patch"
+                "Fix PHP 8 compatibility": "https://yiisoft.github.io/phpunit-patches/phpunit_php8.patch"
             }
         }
     },
@@ -68,11 +68,5 @@
             "type": "composer",
             "url": "https://asset-packagist.org"
         }
-    ],
-    "config": {
-        "allow-plugins": {
-            "cweagans/composer-patches": true,
-            "yiisoft/yii2-composer": true
-        }
-    }
+    ]
 }

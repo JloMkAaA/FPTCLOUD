@@ -1,48 +1,49 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Console;
 
-use Stringable;
 use Symfony\Component\Console\Output\OutputInterface;
 
-class Message implements Stringable
+class Message
 {
-    public function __construct(protected string $message, protected ?Output $output = null)
+    protected $output;
+    protected $message;
+
+    public function __construct($message, Output $output = null)
     {
+        $this->message = $message;
+        $this->output = $output;
     }
 
-    public function with($param): self
+    public function with($param)
     {
         $args = array_merge([$this->message], func_get_args());
-        $this->message = sprintf(...$args);
+        $this->message = call_user_func_array('sprintf', $args);
         return $this;
     }
 
-    public function style(string $name): self
+    public function style($name)
     {
         $this->message = sprintf('<%s>%s</%s>', $name, $this->message, $name);
         return $this;
     }
 
-    public function width(int $length, string $char = ' '): self
+    public function width($length, $char = ' ')
     {
-        $messageLength = $this->getLength();
+        $message_length = $this->getLength();
 
-        if ($messageLength < $length) {
-            $this->message .= str_repeat($char, $length - $messageLength);
+        if ($message_length < $length) {
+            $this->message .= str_repeat($char, $length - $message_length);
         }
         return $this;
     }
 
-    public function cut(int $length): self
+    public function cut($length)
     {
         $this->message = mb_substr($this->message, 0, $length, 'utf-8');
         return $this;
     }
 
-    public function write(int $verbose = OutputInterface::VERBOSITY_NORMAL): void
+    public function write($verbose = OutputInterface::VERBOSITY_NORMAL)
     {
         if ($verbose > $this->output->getVerbosity()) {
             return;
@@ -50,7 +51,7 @@ class Message implements Stringable
         $this->output->write($this->message);
     }
 
-    public function writeln(int $verbose = OutputInterface::VERBOSITY_NORMAL): void
+    public function writeln($verbose = OutputInterface::VERBOSITY_NORMAL)
     {
         if ($verbose > $this->output->getVerbosity()) {
             return;
@@ -58,7 +59,7 @@ class Message implements Stringable
         $this->output->writeln($this->message);
     }
 
-    public function prepend(Message|string $string): self
+    public function prepend($string)
     {
         if ($string instanceof Message) {
             $string = $string->getMessage();
@@ -67,7 +68,7 @@ class Message implements Stringable
         return $this;
     }
 
-    public function append(Message|string $string): self
+    public function append($string)
     {
         if ($string instanceof Message) {
             $string = $string->getMessage();
@@ -77,41 +78,44 @@ class Message implements Stringable
         return $this;
     }
 
-    public function apply(callable $func): self
+    public function apply($func)
     {
         $this->message = call_user_func($func, $this->message);
         return $this;
     }
 
-    public function center(string $char): self
+    public function center($char)
     {
         $this->message = $char . $this->message . $char;
         return $this;
     }
 
-    public function getMessage(): string
+    /**
+     * @return mixed
+     */
+    public function getMessage()
     {
         return $this->message;
     }
 
-    public function block(string $style): self
+    public function block($style)
     {
         $this->message = $this->output->formatHelper->formatBlock($this->message, $style, true);
 
         return $this;
     }
 
-    public function getLength(bool $includeTags = false): int
+    public function getLength($includeTags = false)
     {
         return mb_strwidth($includeTags ? $this->message : strip_tags($this->message), 'utf-8');
     }
 
-    public static function ucfirst(string $text): string
+    public static function ucfirst($text)
     {
         return mb_strtoupper(mb_substr($text, 0, 1, 'utf-8'), 'utf-8') . mb_substr($text, 1, null, 'utf-8');
     }
 
-    public function __toString(): string
+    public function __toString()
     {
         return $this->message;
     }

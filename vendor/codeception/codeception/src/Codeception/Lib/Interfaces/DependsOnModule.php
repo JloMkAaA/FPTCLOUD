@@ -1,5 +1,4 @@
 <?php
-
 namespace Codeception\Lib\Interfaces;
 
 interface DependsOnModule
@@ -7,8 +6,10 @@ interface DependsOnModule
     /**
      * Specifies class or module which is required for current one.
      *
-     * This method should return array with key as class name and value as error message
-     * [className => errorMessage]
+     * THis method should return array with key as class name and value as error message
+     * [className => errorMessage
+     * ]
+     * @return mixed
      */
-    public function _depends(): array;
+    public function _depends();
 }

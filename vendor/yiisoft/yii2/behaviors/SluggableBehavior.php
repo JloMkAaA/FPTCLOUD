@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\behaviors;
@@ -111,7 +111,7 @@ class SluggableBehavior extends AttributeBehavior
      */
     public $uniqueValidator = [];
     /**
-     * @var callable|null slug unique value generator. It is used in case [[ensureUnique]] enabled and generated
+     * @var callable slug unique value generator. It is used in case [[ensureUnique]] enabled and generated
      * slug is not unique. This should be a PHP callable with following signature:
      *
      * ```php

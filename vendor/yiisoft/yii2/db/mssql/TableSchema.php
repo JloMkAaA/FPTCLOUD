@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\db\mssql;
@@ -16,7 +16,7 @@ namespace yii\db\mssql;
 class TableSchema extends \yii\db\TableSchema
 {
     /**
-     * @var string|null name of the catalog (database) that this table belongs to.
+     * @var string name of the catalog (database) that this table belongs to.
      * Defaults to null, meaning no catalog (or the current database).
      */
     public $catalogName;

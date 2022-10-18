@@ -1,52 +1,58 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib;
 
+use Codeception\Configuration;
 use Codeception\Exception\TestParseException;
 use Codeception\Scenario;
-use Codeception\Step\Action;
-use Codeception\Step\Comment;
+use Codeception\Step;
 use Codeception\Test\Metadata;
-use Exception;
-use ParseError;
 
 class Parser
 {
-    protected string $code;
+    /**
+     * @var Scenario
+     */
+    protected $scenario;
+    /**
+     * @var Metadata
+     */
+    protected $metadata;
+    protected $code;
 
-    public function __construct(protected Scenario $scenario, protected Metadata $metadata)
+    public function __construct(Scenario $scenario, Metadata $metadata)
     {
+        $this->scenario = $scenario;
+        $this->metadata = $metadata;
     }
 
-    public function prepareToRun(string $code): void
+    public function prepareToRun($code)
     {
         $this->parseFeature($code);
         $this->parseScenarioOptions($code);
     }
 
-    public function parseFeature(string $code): void
+    public function parseFeature($code)
     {
         $matches = [];
         $code = $this->stripComments($code);
-        $res = preg_match("#\\\$I->wantTo\\(\\s*?['\"](.*?)['\"]\\s*?\\);#", $code, $matches);
+        $res = preg_match("~\\\$I->wantTo\\(\s*?['\"](.*?)['\"]\s*?\\);~", $code, $matches);
         if ($res) {
             $this->scenario->setFeature($matches[1]);
             return;
         }
-        $res = preg_match("#\\\$I->wantToTest\\(['\"](.*?)['\"]\\);#", $code, $matches);
+        $res = preg_match("~\\\$I->wantToTest\\(['\"](.*?)['\"]\\);~", $code, $matches);
         if ($res) {
             $this->scenario->setFeature("test " . $matches[1]);
+            return;
         }
     }
 
-    public function parseScenarioOptions(string $code): void
+    public function parseScenarioOptions($code)
     {
         $this->metadata->setParamsFromAnnotations($this->matchComments($code));
     }
 
-    public function parseSteps(string $code): void
+    public function parseSteps($code)
     {
         // parse per line
         $friends = [];
@@ -54,87 +60,115 @@ class Parser
         $isFriend = false;
         foreach ($lines as $line) {
             // friends
-            if (preg_match("#\\\$I->haveFriend\\((.*?)\\);#", $line, $matches)) {
+            if (preg_match("~\\\$I->haveFriend\((.*?)\);~", $line, $matches)) {
                 $friends[] = trim($matches[1], '\'"');
             }
             // friend's section start
-            if (preg_match("#\\\$(.*?)->does\\(#", $line, $matches)) {
+            if (preg_match("~\\\$(.*?)->does\(~", $line, $matches)) {
                 $friend = $matches[1];
                 if (!in_array($friend, $friends)) {
                     continue;
                 }
                 $isFriend = true;
-                $this->addCommentStep("\n----- {$friend} does -----");
+                $this->addCommentStep("\n----- $friend does -----");
                 continue;
             }
 
             // actions
-            if (preg_match("#\\\$I->(.*)\\((.*?)\\);#", $line, $matches)) {
+            if (preg_match("~\\\$I->(.*)\((.*?)\);~", $line, $matches)) {
                 $this->addStep($matches);
             }
 
             // friend's section ends
-            if ($isFriend && str_contains($line, '}')) {
+            if ($isFriend && strpos($line, '}') !== false) {
                 $this->addCommentStep("-------- back to me\n");
                 $isFriend = false;
             }
         }
     }
 
-    protected function addStep(array $matches): void
+    protected function addStep($matches)
     {
-        [$m, $action, $params] = $matches;
+        list($m, $action, $params) = $matches;
         if (in_array($action, ['wantTo', 'wantToTest'])) {
             return;
         }
-        $this->scenario->addStep(new Action($action, explode(',', $params)));
+        $this->scenario->addStep(new Step\Action($action, explode(',', $params)));
     }
 
-    protected function addCommentStep(string $comment): void
+    protected function addCommentStep($comment)
     {
-        $this->scenario->addStep(new Comment($comment, []));
+        $this->scenario->addStep(new \Codeception\Step\Comment($comment, []));
     }
 
-    public static function load(string $file): void
+    public static function validate($file)
     {
+        $config = Configuration::config();
+        if (empty($config['settings']['lint'])) { // lint disabled in config
+            return;
+        }
+        if (!function_exists('exec')) {
+            //exec function is disabled #3324
+            return;
+        }
+        exec("php -l " . escapeshellarg($file) . " 2>&1", $output, $code);
+        if ($code !== 0) {
+            throw new TestParseException($file, implode("\n", $output));
+        }
+    }
+
+    public static function load($file)
+    {
+        if (PHP_MAJOR_VERSION < 7) {
+            self::validate($file);
+        }
         try {
             self::includeFile($file);
-        } catch (ParseError $e) {
+        } catch (\ParseError $e) {
             throw new TestParseException($file, $e->getMessage(), $e->getLine());
-        } catch (Exception) {
+        } catch (\Exception $e) {
             // file is valid otherwise
         }
     }
 
-    /**
-     * @return string[]
-     */
-    public static function getClassesFromFile(string $file): array
+    public static function getClassesFromFile($file)
     {
         $sourceCode = file_get_contents($file);
-        $classes    = [];
-        if (PHP_MAJOR_VERSION > 5) {
-            $tokens = token_get_all($sourceCode, TOKEN_PARSE);
-        } else {
-            $tokens = token_get_all($sourceCode);
-        }
+        $classes = [];
+        $tokens = token_get_all($sourceCode);
         $tokenCount = count($tokens);
         $namespace = '';
 
-        for ($i = 0; $i < $tokenCount; ++$i) {
+        for ($i = 0; $i < $tokenCount; $i++) {
             if ($tokens[$i][0] === T_NAMESPACE) {
+                if ($tokens[$i + 1] === ':') {
+                    //named parameter foo(namespace: $var)
+                    continue;
+                }
+                if ($tokens[$i + 2] === ':' && $tokens[$i + 1][0] === T_WHITESPACE) {
+                    //named parameter foo(namespace : $var)
+                    continue;
+                }
                 $namespace = '';
-                for ($j = $i + 1; $j < $tokenCount; ++$j) {
+                for ($j = $i + 1; $j < $tokenCount; $j++) {
                     if ($tokens[$j] === '{' || $tokens[$j] === ';') {
                         break;
                     }
-                    if ($tokens[$j][0] === T_STRING || $tokens[$j][0] === T_NAME_QUALIFIED) {
+                    if ($tokens[$j][0] === T_STRING || (PHP_MAJOR_VERSION >= 8 && $tokens[$j][0] === T_NAME_QUALIFIED)) {
                         $namespace .= $tokens[$j][1] . '\\';
                     }
                 }
             }
 
             if ($tokens[$i][0] === T_CLASS) {
+                if ($tokens[$i + 1] === ':') {
+                    //named parameter foo(class: $var)
+                    continue;
+                }
+                if ($tokens[$i + 2] === ':' && $tokens[$i + 1][0] === T_WHITESPACE) {
+                    //named parameter foo(class : $var)
+                    continue;
+                }
                 if (!isset($tokens[$i - 2])) {
                     $classes[] = $namespace . $tokens[$i + 2][1];
                     continue;
@@ -142,7 +176,7 @@ class Parser
                 if ($tokens[$i - 2][0] === T_NEW) {
                     continue;
                 }
-                if ($tokens[$i - 1][0] === T_WHITESPACE && $tokens[$i - 2][0] === T_DOUBLE_COLON) {
+                if ($tokens[$i - 1][0] === T_WHITESPACE and $tokens[$i - 2][0] === T_DOUBLE_COLON) {
                     continue;
                 }
                 if ($tokens[$i - 1][0] === T_DOUBLE_COLON) {
@@ -152,8 +186,10 @@ class Parser
             }
         }
 
-        $tokens = null;
-        gc_mem_caches();
+        if (PHP_MAJOR_VERSION > 5) {
+            $tokens = null;
+            gc_mem_caches();
+        }
 
         return $classes;
     }
@@ -161,30 +197,35 @@ class Parser
     /*
      * Include in different scope to prevent included file from affecting $file variable
      */
-    private static function includeFile(string $file): void
+    private static function includeFile($file)
     {
         include_once $file;
     }
 
-    protected function stripComments(string $code): string
+    /**
+     * @param $code
+     * @return mixed
+     */
+    protected function stripComments($code)
     {
-        $code = preg_replace('#//.*?$#m', '', $code); // remove inline comments
-        return preg_replace('#/*\*.*?\*/#ms', '', $code); // remove block comment
+        $code = preg_replace('~\/\/.*?$~m', '', $code); // remove inline comments
+        $code = preg_replace('~\/*\*.*?\*\/~ms', '', $code);
+        return $code; // remove block comment
     }
 
-    protected function matchComments(string $code): string
+    protected function matchComments($code)
     {
         $matches = [];
         $comments = '';
-        $hasLineComment = preg_match_all('#//(.*?)$#m', $code, $matches);
+        $hasLineComment = preg_match_all('~\/\/(.*?)$~m', $code, $matches);
         if ($hasLineComment) {
             foreach ($matches[1] as $line) {
-                $comments .= $line . "\n";
+                $comments .= $line."\n";
             }
         }
-        $hasBlockComment = preg_match('#/*\*(.*?)\*/#ms', $code, $matches);
+        $hasBlockComment = preg_match('~\/*\*(.*?)\*\/~ms', $code, $matches);
         if ($hasBlockComment) {
-            $comments .= $matches[1] . "\n";
+            $comments .= $matches[1]."\n";
         }
         return $comments;
     }

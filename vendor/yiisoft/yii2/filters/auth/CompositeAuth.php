@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\filters\auth;
@@ -70,11 +70,9 @@ class CompositeAuth extends AuthMethod
                 }
             }
 
-            if (isset($this->owner->action) && $auth->isActive($this->owner->action)) {
-                $identity = $auth->authenticate($user, $request, $response);
-                if ($identity !== null) {
-                    return $identity;
-                }
+            $identity = $auth->authenticate($user, $request, $response);
+            if ($identity !== null) {
+                return $identity;
             }
         }
 

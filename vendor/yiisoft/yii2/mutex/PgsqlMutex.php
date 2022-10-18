@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\mutex;
@@ -65,7 +65,7 @@ class PgsqlMutex extends DbMutex
      * @param string $name of the lock to be acquired.
      * @param int $timeout time (in seconds) to wait for lock to become released.
      * @return bool acquiring result.
-     * @see https://www.postgresql.org/docs/9.0/functions-admin.html
+     * @see http://www.postgresql.org/docs/9.0/static/functions-admin.html
      */
     protected function acquireLock($name, $timeout = 0)
     {
@@ -86,7 +86,7 @@ class PgsqlMutex extends DbMutex
      * Releases lock by given name.
      * @param string $name of the lock to be released.
      * @return bool release result.
-     * @see https://www.postgresql.org/docs/9.0/functions-admin.html
+     * @see http://www.postgresql.org/docs/9.0/static/functions-admin.html
      */
     protected function releaseLock($name)
     {

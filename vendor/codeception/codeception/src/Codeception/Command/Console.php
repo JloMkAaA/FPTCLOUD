@@ -1,31 +1,25 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Codecept;
 use Codeception\Configuration;
+use Codeception\Event\DispatcherWrapper;
 use Codeception\Event\SuiteEvent;
 use Codeception\Event\TestEvent;
 use Codeception\Events;
 use Codeception\Exception\ConfigurationException;
 use Codeception\Lib\Console\Output;
 use Codeception\Scenario;
-use Codeception\Suite;
 use Codeception\SuiteManager;
 use Codeception\Test\Cept;
 use Codeception\Util\Debug;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function array_keys;
-use function file_exists;
-use function function_exists;
-use function pcntl_signal;
+use Symfony\Component\Console\Question\Question;
 
 /**
  * Try to execute test commands in run-time. You may try commands before writing the test.
@@ -34,20 +28,15 @@ use function pcntl_signal;
  */
 class Console extends Command
 {
-    protected ?Cept $test = null;
+    use DispatcherWrapper;
 
-    protected ?Codecept $codecept = null;
+    protected $test;
+    protected $codecept;
+    protected $suite;
+    protected $output;
+    protected $actions = [];
 
-    protected ?Suite $suite = null;
-
-    protected ?OutputInterface $output = null;
-
-    /**
-     * @var string[]
-     */
-    protected array $actions = [];
-
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition([
             new InputArgument('suite', InputArgument::REQUIRED, 'suite to be executed'),
@@ -57,12 +46,12 @@ class Console extends Command
         parent::configure();
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Launches interactive test console';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
         $suiteName = $input->getArgument('suite');
         $this->output = $output;
@@ -79,60 +68,59 @@ class Console extends Command
         Debug::setOutput(new Output($options));
 
         $this->codecept = new Codecept($options);
-        $eventDispatcher = $this->codecept->getDispatcher();
+        $dispatcher = $this->codecept->getDispatcher();
 
-        $suiteManager = new SuiteManager($eventDispatcher, $suiteName, $settings, []);
+        $suiteManager = new SuiteManager($dispatcher, $suiteName, $settings);
         $suiteManager->initialize();
-
         $this->suite = $suiteManager->getSuite();
         $moduleContainer = $suiteManager->getModuleContainer();
 
         $this->actions = array_keys($moduleContainer->getActions());
 
-        $this->test = new Cept('', '');
+        $this->test = new Cept(null, null);
         $this->test->getMetadata()->setServices([
-            'dispatcher' => $eventDispatcher,
-            'modules' => $moduleContainer
+           'dispatcher' => $dispatcher,
+           'modules' =>  $moduleContainer
         ]);
 
         $scenario = new Scenario($this->test);
         if (!$settings['actor']) {
             throw new ConfigurationException("Interactive shell can't be started without an actor");
         }
-
-        if (isset($config['namespace']) && $config['namespace'] !== '') {
-            $settings['actor'] = $config['namespace'] . '\\Support\\' . $settings['actor'];
+        if (isset($config["namespace"])) {
+            $settings['actor'] = $config["namespace"] .'\\' . $settings['actor'];
         }
         $actor = $settings['actor'];
         $I = new $actor($scenario);
 
         $this->listenToSignals();
 
-        $output->writeln("<info>Interactive console started for suite {$suiteName}</info>");
+        $output->writeln("<info>Interactive console started for suite $suiteName</info>");
         $output->writeln("<info>Try Codeception commands without writing a test</info>");
 
-        $suiteEvent = new SuiteEvent($this->suite, $settings);
-        $eventDispatcher->dispatch($suiteEvent, Events::SUITE_INIT);
-        $eventDispatcher->dispatch(new TestEvent($this->test), Events::TEST_PARSED);
-        $eventDispatcher->dispatch(new TestEvent($this->test), Events::TEST_BEFORE);
+        $suiteEvent = new SuiteEvent($this->suite, $this->codecept->getResult(), $settings);
+        $this->dispatch($dispatcher, Events::SUITE_BEFORE, $suiteEvent);
 
-        if (is_string($settings['bootstrap']) && file_exists($settings['bootstrap'])) {
+        $this->dispatch($dispatcher, Events::TEST_PARSED, new TestEvent($this->test));
+        $this->dispatch($dispatcher, Events::TEST_BEFORE, new TestEvent($this->test));
+
+        if (file_exists($settings['bootstrap'])) {
             require $settings['bootstrap'];
         }
 
         $I->pause();
 
-        $eventDispatcher->dispatch(new TestEvent($this->test), Events::TEST_AFTER);
-        $eventDispatcher->dispatch(new SuiteEvent($this->suite), Events::SUITE_AFTER);
+        $this->dispatch($dispatcher, Events::TEST_AFTER, new TestEvent($this->test));
+        $this->dispatch($dispatcher, Events::SUITE_AFTER, new SuiteEvent($this->suite));
 
         $output->writeln("<info>Bye-bye!</info>");
         return 0;
     }
 
-    protected function listenToSignals(): void
+    protected function listenToSignals()
     {
         if (function_exists('pcntl_signal')) {
-            declare(ticks=1);
+            declare (ticks = 1);
             pcntl_signal(SIGINT, SIG_IGN);
             pcntl_signal(SIGTERM, SIG_IGN);
         }

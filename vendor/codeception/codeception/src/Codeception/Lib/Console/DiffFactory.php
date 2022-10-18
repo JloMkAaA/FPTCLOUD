@@ -1,27 +1,40 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Console;
 
 use SebastianBergmann\Comparator\ComparisonFailure;
 use SebastianBergmann\Diff\Differ;
-use SebastianBergmann\Diff\Output\UnifiedDiffOutputBuilder;
 
+/**
+ * DiffFactory
+ **/
 class DiffFactory
 {
-    public function createDiff(ComparisonFailure $failure): string
+    /**
+     * @param ComparisonFailure $failure
+     * @return string|null
+     */
+    public function createDiff(ComparisonFailure $failure)
     {
-        return $this->getDiff($failure->getExpectedAsString(), $failure->getActualAsString());
+        $diff = $this->getDiff($failure->getExpectedAsString(), $failure->getActualAsString());
+        if (!$diff) {
+            return null;
+        }
+
+        return $diff;
     }
 
-    private function getDiff(string $expected = '', string $actual = ''): string
+    /**
+     * @param string $expected
+     * @param string $actual
+     * @return string
+     */
+    private function getDiff($expected = '', $actual = '')
     {
         if (!$actual && !$expected) {
             return '';
         }
 
-        $differ = new Differ(new UnifiedDiffOutputBuilder(''));
+        $differ = new Differ('');
 
         return $differ->diff($expected, $actual);
     }

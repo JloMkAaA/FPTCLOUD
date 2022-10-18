@@ -14,11 +14,11 @@ namespace Symfony\Component\BrowserKit;
 /**
  * @author Fabien Potencier <fabien@symfony.com>
  */
-final class Response
+class Response
 {
-    private string $content;
-    private int $status;
-    private array $headers;
+    protected $content;
+    protected $status;
+    protected $headers;
 
     /**
      * The headers array is a set of key/value pairs. If a header is present multiple times
@@ -28,7 +28,7 @@ final class Response
      * @param int    $status  The response status code
      * @param array  $headers An array of headers
      */
-    public function __construct(string $content = '', int $status = 200, array $headers = [])
+    public function __construct($content = '', $status = 200, array $headers = [])
     {
         $this->content = $content;
         $this->status = $status;
@@ -37,16 +37,18 @@ final class Response
 
     /**
      * Converts the response object to string containing all headers and the response content.
+     *
+     * @return string The response with headers and content
      */
-    public function __toString(): string
+    public function __toString()
     {
         $headers = '';
         foreach ($this->headers as $name => $value) {
             if (\is_string($value)) {
-                $headers .= sprintf("%s: %s\n", $name, $value);
+                $headers .= $this->buildHeader($name, $value);
             } else {
                 foreach ($value as $headerValue) {
-                    $headers .= sprintf("%s: %s\n", $name, $headerValue);
+                    $headers .= $this->buildHeader($name, $headerValue);
                 }
             }
         }
@@ -54,25 +56,58 @@ final class Response
         return $headers."\n".$this->content;
     }
 
-    public function getContent(): string
+    /**
+     * Returns the build header line.
+     *
+     * @param string $name  The header name
+     * @param string $value The header value
+     *
+     * @return string The built header line
+     */
+    protected function buildHeader($name, $value)
+    {
+        return sprintf("%s: %s\n", $name, $value);
+    }
+
+    /**
+     * Gets the response content.
+     *
+     * @return string The response content
+     */
+    public function getContent()
     {
         return $this->content;
     }
 
-    public function getStatusCode(): int
+    /**
+     * Gets the response status code.
+     *
+     * @return int The response status code
+     */
+    public function getStatus()
     {
         return $this->status;
     }
 
-    public function getHeaders(): array
+    /**
+     * Gets the response headers.
+     *
+     * @return array The response headers
+     */
+    public function getHeaders()
     {
         return $this->headers;
     }
 
     /**
-     * @return string|array|null The first header value if $first is true, an array of values otherwise
+     * Gets a response header.
+     *
+     * @param string $header The header name
+     * @param bool   $first  Whether to return the first value or all header values
+     *
+     * @return string|array The first header value if $first is true, an array of values otherwise
      */
-    public function getHeader(string $header, bool $first = true): string|array|null
+    public function getHeader($header, $first = true)
     {
         $normalizedHeader = str_replace('-', '_', strtolower($header));
         foreach ($this->headers as $key => $value) {

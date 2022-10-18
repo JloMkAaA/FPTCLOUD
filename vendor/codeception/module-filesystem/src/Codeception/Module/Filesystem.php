@@ -1,16 +1,11 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Module;
 
-use Codeception\Configuration;
-use Codeception\Module;
-use Codeception\PHPUnit\TestCase;
-use Codeception\TestInterface;
 use Codeception\Util\FileSystem as Util;
-use PHPUnit\Framework\AssertionFailedError;
 use Symfony\Component\Finder\Finder;
+use Codeception\Module as CodeceptionModule;
+use Codeception\TestInterface;
+use Codeception\Configuration;
 
 /**
  * Module for testing local filesystem.
@@ -24,15 +19,14 @@ use Symfony\Component\Finder\Finder;
  *
  * Module was developed to test Codeception itself.
  */
-class Filesystem extends Module
+class Filesystem extends CodeceptionModule
 {
-    protected string $file = '';
+    protected $file = null;
+    protected $filepath = null;
 
-    protected string $filePath = '';
+    protected $path = '';
 
-    protected string $path = '';
-
-    public function _before(TestInterface $test): void
+    public function _before(TestInterface $test)
     {
         $this->path = Configuration::projectDir();
     }
@@ -40,24 +34,25 @@ class Filesystem extends Module
     /**
      * Enters a directory In local filesystem.
      * Project root directory is used by default
+     *
+     * @param string $path
      */
-    public function amInPath(string $path): void
+    public function amInPath($path)
     {
-        $this->path = $this->absolutizePath($path) . DIRECTORY_SEPARATOR;
-        if (!file_exists($this->path)) {
-            TestCase::fail('directory not found');
-        }
-        chdir($this->path);
+        chdir($this->path = $this->absolutizePath($path) . DIRECTORY_SEPARATOR);
         $this->debug('Moved to ' . getcwd());
     }
 
-    protected function absolutizePath(string $path): string
+    /**
+     * @param string $path
+     * @return string
+     */
+    protected function absolutizePath($path)
     {
         // *nix way
-        if (str_starts_with($path, '/')) {
+        if (strpos($path, '/') === 0) {
             return $path;
         }
-
         // windows
         if (strpos($path, ':\\') === 1) {
             return $path;
@@ -75,16 +70,15 @@ class Filesystem extends Module
      * <?php
      * $I->openFile('composer.json');
      * $I->seeInThisFile('codeception/codeception');
+     * ?>
      * ```
+     *
+     * @param string $filename
      */
-    public function openFile(string $filename): void
+    public function openFile($filename)
     {
-        $absolutePath = $this->absolutizePath($filename);
-        if (!file_exists($absolutePath)) {
-            TestCase::fail('file not found');
-        }
-        $this->file = file_get_contents($absolutePath);
-        $this->filePath = $filename;
+        $this->file = file_get_contents($this->absolutizePath($filename));
+        $this->filepath = $filename;
     }
 
     /**
@@ -93,16 +87,17 @@ class Filesystem extends Module
      * ``` php
      * <?php
      * $I->deleteFile('composer.lock');
+     * ?>
      * ```
+     *
+     * @param string $filename
      */
-    public function deleteFile(string $filename): void
+    public function deleteFile($filename)
     {
-        $absolutePath = $this->absolutizePath($filename);
-        if (!file_exists($absolutePath)) {
-            TestCase::fail('file not found');
+        if (!file_exists($this->absolutizePath($filename))) {
+            \Codeception\PHPUnit\TestCase::fail('file not found');
         }
-
-        unlink($absolutePath);
+        unlink($this->absolutizePath($filename));
     }
 
     /**
@@ -111,9 +106,12 @@ class Filesystem extends Module
      * ``` php
      * <?php
      * $I->deleteDir('vendor');
+     * ?>
      * ```
+     *
+     * @param string $dirname
      */
-    public function deleteDir(string $dirname): void
+    public function deleteDir($dirname)
     {
         $dir = $this->absolutizePath($dirname);
         Util::deleteDir($dir);
@@ -125,9 +123,13 @@ class Filesystem extends Module
      * ``` php
      * <?php
      * $I->copyDir('vendor','old_vendor');
+     * ?>
      * ```
+     *
+     * @param string $src
+     * @param string $dst
      */
-    public function copyDir(string $src, string $dst): void
+    public function copyDir($src, $dst)
     {
         Util::copyDir($src, $dst);
     }
@@ -141,11 +143,14 @@ class Filesystem extends Module
      * <?php
      * $I->openFile('composer.json');
      * $I->seeInThisFile('codeception/codeception');
+     * ?>
      * ```
+     *
+     * @param string $text
      */
-    public function seeInThisFile(string $text): void
+    public function seeInThisFile($text)
     {
-        $this->assertStringContainsString($text, $this->file, "No text '{$text}' in currently opened file");
+        $this->assertStringContainsString($text, $this->file, "No text '$text' in currently opened file");
     }
 
     /**
@@ -157,26 +162,28 @@ class Filesystem extends Module
      * <?php
      * $I->openFile('composer.json');
      * $I->seeNumberNewLines(5);
+     * ?>
      * ```
      *
      * @param int $number New lines
      */
-    public function seeNumberNewLines(int $number): void
+    public function seeNumberNewLines($number)
     {
-        $lines = preg_split('#[\n\r]#', $this->file);
+        $lines = preg_split('/\n|\r/', $this->file);
 
         $this->assertTrue(
-            $number === count($lines),
-            "The number of new lines does not match with {$number}"
+            (int) $number === count($lines),
+            "The number of new lines does not match with $number"
         );
     }
-
     /**
      * Checks that contents of currently opened file matches $regex
+     *
+     * @param string $regex
      */
-    public function seeThisFileMatches(string $regex): void
+    public function seeThisFileMatches($regex)
     {
-        $this->assertRegExp($regex, $this->file, "Contents of currently opened file does not match '{$regex}'");
+        $this->assertRegExp($regex, $this->file, "Contents of currently opened file does not match '$regex'");
     }
 
     /**
@@ -189,12 +196,15 @@ class Filesystem extends Module
      * <?php
      * $I->openFile('process.pid');
      * $I->seeFileContentsEqual('3192');
+     * ?>
      * ```
+     *
+     * @param string $text
      */
-    public function seeFileContentsEqual(string $text): void
+    public function seeFileContentsEqual($text)
     {
         $file = str_replace("\r", '', $this->file);
-        TestCase::assertEquals($text, $file);
+        \Codeception\PHPUnit\TestCase::assertEquals($text, $file);
     }
 
     /**
@@ -204,19 +214,22 @@ class Filesystem extends Module
      * <?php
      * $I->openFile('composer.json');
      * $I->dontSeeInThisFile('codeception/codeception');
+     * ?>
      * ```
+     *
+     * @param string $text
      */
-    public function dontSeeInThisFile(string $text): void
+    public function dontSeeInThisFile($text)
     {
-        $this->assertStringNotContainsString($text, $this->file, "Found text '{$text}' in currently opened file");
+        $this->assertStringNotContainsString($text, $this->file, "Found text '$text' in currently opened file");
     }
 
     /**
      * Deletes a file
      */
-    public function deleteThisFile(): void
+    public function deleteThisFile()
     {
-        $this->deleteFile($this->filePath);
+        $this->deleteFile($this->filepath);
     }
 
     /**
@@ -226,33 +239,40 @@ class Filesystem extends Module
      * ``` php
      * <?php
      * $I->seeFileFound('UserModel.php','app/models');
+     * ?>
      * ```
+     *
+     * @param string $filename
+     * @param string $path
      */
-    public function seeFileFound(string $filename, string $path = ''): void
+    public function seeFileFound($filename, $path = '')
     {
         if ($path === '' && file_exists($filename)) {
             $this->openFile($filename);
-            TestCase::assertFileExists($filename);
+            \Codeception\PHPUnit\TestCase::assertFileExists($filename);
             return;
         }
 
         $found = $this->findFileInPath($filename, $path);
 
         if ($found === false) {
-            $this->fail(sprintf('File "%s" not found at "%s"', $filename, $path));
+            $this->fail("File \"$filename\" not found at \"$path\"");
         }
 
         $this->openFile($found);
-        TestCase::assertFileExists($found);
+        \Codeception\PHPUnit\TestCase::assertFileExists($found);
     }
 
     /**
      * Checks if file does not exist in path
+     *
+     * @param string $filename
+     * @param string $path
      */
-    public function dontSeeFileFound(string $filename, string $path = ''): void
+    public function dontSeeFileFound($filename, $path = '')
     {
         if ($path === '') {
-            TestCase::assertFileDoesNotExist($filename);
+            \Codeception\PHPUnit\TestCase::assertFileNotExists($filename);
             return;
         }
 
@@ -260,24 +280,26 @@ class Filesystem extends Module
 
         if ($found === false) {
             //this line keeps a count of assertions correct
-            TestCase::assertTrue(true);
+            \Codeception\PHPUnit\TestCase::assertTrue(true);
             return;
         }
 
-        TestCase::assertFileDoesNotExist($found);
+        \Codeception\PHPUnit\TestCase::assertFileNotExists($found);
     }
 
     /**
      * Finds the first matching file
      *
-     * @throws AssertionFailedError When path does not exist
+     * @param string $filename
+     * @param string $path
+     * @throws \PHPUnit\Framework\AssertionFailedError When path does not exist
      * @return string|false Path to the first matching file
      */
-    private function findFileInPath(string $filename, string $path): string|false
+    private function findFileInPath($filename, $path)
     {
         $path = $this->absolutizePath($path);
         if (!file_exists($path)) {
-            $this->fail(sprintf('Directory does not exist: %s', $path));
+            $this->fail("Directory does not exist: $path");
         }
 
         $files = Finder::create()->files()->name($filename)->in($path);
@@ -297,9 +319,12 @@ class Filesystem extends Module
      * ``` php
      * <?php
      * $I->cleanDir('logs');
+     * ?>
      * ```
+     *
+     * @param string $dirname
      */
-    public function cleanDir(string $dirname): void
+    public function cleanDir($dirname)
     {
         $path = $this->absolutizePath($dirname);
         Util::doEmptyDir($path);
@@ -307,8 +332,11 @@ class Filesystem extends Module
 
     /**
      * Saves contents to file
+     *
+     * @param string $filename
+     * @param string $contents
      */
-    public function writeToFile(string $filename, string $contents): void
+    public function writeToFile($filename, $contents)
     {
         file_put_contents($filename, $contents);
     }

@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\rest;
@@ -31,7 +31,7 @@ class OptionsAction extends \yii\base\Action
 
     /**
      * Responds to the OPTIONS request.
-     * @param string|null $id
+     * @param string $id
      */
     public function run($id = null)
     {

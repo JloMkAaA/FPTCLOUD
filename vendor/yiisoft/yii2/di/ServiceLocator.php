@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\di;
@@ -13,7 +13,7 @@ use yii\base\Component;
 use yii\base\InvalidConfigException;
 
 /**
- * ServiceLocator implements a [service locator](https://en.wikipedia.org/wiki/Service_locator_pattern).
+ * ServiceLocator implements a [service locator](http://en.wikipedia.org/wiki/Service_locator_pattern).
  *
  * To use ServiceLocator, you first need to register component IDs with the corresponding component
  * definitions with the locator by calling [[set()]] or [[setComponents()]].

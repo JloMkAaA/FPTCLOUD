@@ -1,15 +1,10 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Extension;
 
 use Codeception\Event\FailEvent;
-use Codeception\Event\PrintResultEvent;
-use Codeception\Event\TestEvent;
 use Codeception\Events;
 use Codeception\Extension;
-use Codeception\Subscriber\Console as CodeceptConsole;
+use Codeception\Subscriber\Console;
 
 /**
  * DotReporter provides less verbose output for test execution.
@@ -44,82 +39,72 @@ use Codeception\Subscriber\Console as CodeceptConsole;
  */
 class DotReporter extends Extension
 {
-    protected ?CodeceptConsole $standardReporter = null;
+    /**
+     * @var Console
+     */
+    protected $standardReporter;
 
-    protected array $errors = [];
+    protected $errors = [];
+    protected $failures = [];
 
-    protected array $failures = [];
+    protected $width = 10;
+    protected $currentPos = 0;
 
-    protected int $width = 10;
-
-    protected int $currentPos = 0;
-
-    public function _initialize(): void
+    public function _initialize()
     {
+        $this->options['silent'] = false; // turn on printing for this extension
         $this->_reconfigure(['settings' => ['silent' => true]]); // turn off printing for everything else
-        $this->standardReporter = new CodeceptConsole($this->options);
+        $this->standardReporter = new Console($this->options);
         $this->width = $this->standardReporter->detectWidth();
     }
 
-    /**
-     * We are listening for events
-     *
-     * @var array<string, string>
-     */
-    public static array $events = [
+    // we are listening for events
+    public static $events = [
         Events::SUITE_BEFORE => 'beforeSuite',
         Events::TEST_SUCCESS => 'success',
         Events::TEST_FAIL    => 'fail',
         Events::TEST_ERROR   => 'error',
         Events::TEST_SKIPPED => 'skipped',
-        Events::TEST_FAIL_PRINT => 'printFailed',
-        Events::RESULT_PRINT_AFTER => 'afterResult',
+        Events::TEST_FAIL_PRINT => 'printFailed'
     ];
 
-    public function beforeSuite(): void
+    public function beforeSuite()
     {
-        $this->output->writeln('');
+        $this->writeln("");
     }
 
-    public function success(): void
+    public function success()
     {
         $this->printChar('.');
     }
 
-    public function fail(FailEvent $event): void
+    public function fail(FailEvent $e)
     {
-        $this->printChar('<error>F</error>');
+        $this->printChar("<error>F</error>");
     }
 
-    public function error(FailEvent $event): void
+    public function error(FailEvent $e)
     {
         $this->printChar('<error>E</error>');
     }
 
-    public function skipped(): void
+    public function skipped()
     {
         $this->printChar('S');
     }
-
-    protected function printChar(string $char): void
+    
+    protected function printChar($char)
     {
         if ($this->currentPos >= $this->width) {
-            $this->output->writeln('');
+            $this->writeln('');
             $this->currentPos = 0;
         }
         $this->write($char);
-        ++$this->currentPos;
+        $this->currentPos++;
     }
 
-    public function printFailed(FailEvent $event): void
+    public function printFailed(FailEvent $event)
     {
         $this->standardReporter->printFail($event);
-    }
-
-    public function afterResult(PrintResultEvent $event): void
-    {
-        $this->output->writeln('');
-        $this->output->writeln('');
-        $this->standardReporter->afterResult($event);
     }
 }

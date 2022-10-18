@@ -1,44 +1,38 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Codeception\Step;
 
 use Codeception\Lib\ModuleContainer;
 use Codeception\Util\Template;
-use Exception;
-
-use function codecept_debug;
-use function ucfirst;
 
 class TryTo extends Assertion implements GeneratedStep
 {
-    public function run(ModuleContainer $container = null): bool
+    public function run(ModuleContainer $container = null)
     {
         $this->isTry = true;
         try {
             parent::run($container);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             codecept_debug("Failed to perform: {$e->getMessage()}, skipping...");
             return false;
         }
         return true;
     }
 
-    public static function getTemplate(Template $template): ?Template
+    public static function getTemplate(Template $template)
     {
         $action = $template->getVar('action');
 
-        if ((str_starts_with($action, 'have')) || (str_starts_with($action, 'am'))) {
-            return null; // dont try on conditions
+        if ((strpos($action, 'have') === 0) || (strpos($action, 'am') === 0)) {
+            return; // dont try on conditions
         }
 
-        if (str_starts_with($action, 'wait')) {
-            return null; // dont try on waiters
+        if (strpos($action, 'wait') === 0) {
+            return; // dont try on waiters
         }
 
-        if (str_starts_with($action, 'grab')) {
-            return null; // dont on grabbers
+        if (strpos($action, 'grab') === 0) {
+            return; // dont on grabbers
         }
 
         $conditionalDoc = "* [!] Test won't be stopped on fail. Error won't be logged \n     " . $template->getVar('doc');

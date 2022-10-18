@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\filters;
@@ -37,7 +37,7 @@ class AjaxFilter extends ActionFilter
      */
     public $errorMessage = 'Request must be XMLHttpRequest.';
     /**
-     * @var Request|null the current request. If not set, the `request` application component will be used.
+     * @var Request the current request. If not set, the `request` application component will be used.
      */
     public $request;
 

@@ -1,18 +1,13 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
-use Codeception\Test\Loader\Gherkin as GherkinLoader;
+use Codeception\Test\Loader\Gherkin;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\Table;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function count;
 
 /**
  * Prints all steps from all Gherkin contexts for a specific suite
@@ -24,10 +19,10 @@ use function count;
  */
 class GherkinSteps extends Command
 {
-    use Shared\ConfigTrait;
-    use Shared\StyleTrait;
+    use Shared\Config;
+    use Shared\Style;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition(
             [
@@ -38,25 +33,26 @@ class GherkinSteps extends Command
         parent::configure();
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Prints all defined feature steps';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
         $this->addStyles($output);
         $suite = $input->getArgument('suite');
         $config = $this->getSuiteConfig($suite);
         $config['describe_steps'] = true;
 
-        $loader = new GherkinLoader($config);
+        $loader = new Gherkin($config);
         $steps = $loader->getSteps();
 
         foreach ($steps as $name => $context) {
+            /** @var $table Table  **/
             $table = new Table($output);
             $table->setHeaders(['Step', 'Implementation']);
-            $output->writeln("Steps from <bold>{$name}</bold> context:");
+            $output->writeln("Steps from <bold>$name</bold> context:");
 
             foreach ($context as $step => $callable) {
                 if (count($callable) < 2) {

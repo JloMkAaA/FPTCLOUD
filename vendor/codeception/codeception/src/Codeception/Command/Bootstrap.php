@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Template\Bootstrap as BootstrapTemplate;
@@ -26,7 +23,8 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Bootstrap extends Command
 {
-    protected function configure(): void
+
+    protected function configure()
     {
         $this->setDefinition(
             [
@@ -38,17 +36,17 @@ class Bootstrap extends Command
                     'Namespace to add for actor classes and helpers'
                 ),
                 new InputOption('actor', 'a', InputOption::VALUE_OPTIONAL, 'Custom actor instead of Tester'),
-                new InputOption('empty', 'e', InputOption::VALUE_NONE, "Don't create standard suites")
+                new InputOption('empty', 'e', InputOption::VALUE_NONE, 'Don\'t create standard suites')
             ]
         );
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return "Creates default test suites and generates all required files";
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
         $bootstrap = new BootstrapTemplate($input, $output);
         if ($input->getArgument('path')) {

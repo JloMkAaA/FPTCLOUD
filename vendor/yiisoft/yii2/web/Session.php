@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\web;
@@ -823,7 +823,7 @@ class Session extends Component implements \IteratorAggregate, \ArrayAccess, \Co
      *
      * Note that if you use [[addFlash()]], `$message` will be an array, and you will have to adjust the above code.
      *
-     * [bootstrap alert]: https://getbootstrap.com/docs/3.4/components/#alerts
+     * [bootstrap alert]: http://getbootstrap.com/components/#alerts
      *
      * @param bool $delete whether to delete the flash messages right after this method is called.
      * If false, the flash messages will be automatically deleted in the next request.

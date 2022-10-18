@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\console;
@@ -32,6 +32,8 @@ use yii\helpers\Inflector;
  * @property-read string $helpSummary The one-line short summary describing this controller.
  * @property-read array $passedOptionValues The properties corresponding to the passed options.
  * @property-read array $passedOptions The names of the options passed during execution.
+ * @property Request $request
+ * @property Response $response
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -678,7 +680,7 @@ class Controller extends \yii\base\Controller
 
     /**
      * @param Action $action
-     * @return \ReflectionFunctionAbstract
+     * @return \ReflectionMethod
      */
     protected function getActionMethodReflection($action)
     {
@@ -695,7 +697,7 @@ class Controller extends \yii\base\Controller
 
     /**
      * Parses the comment block into tags.
-     * @param \ReflectionClass|\ReflectionProperty|\ReflectionFunctionAbstract $reflection the comment block
+     * @param \Reflector $reflection the comment block
      * @return array the parsed tags
      */
     protected function parseDocCommentTags($reflection)
@@ -723,7 +725,7 @@ class Controller extends \yii\base\Controller
     /**
      * Returns the first line of docblock.
      *
-     * @param \ReflectionClass|\ReflectionProperty|\ReflectionFunctionAbstract $reflection
+     * @param \Reflector $reflection
      * @return string
      */
     protected function parseDocCommentSummary($reflection)
@@ -739,7 +741,7 @@ class Controller extends \yii\base\Controller
     /**
      * Returns full description from the docblock.
      *
-     * @param \ReflectionClass|\ReflectionProperty|\ReflectionFunctionAbstract $reflection
+     * @param \Reflector $reflection
      * @return string
      */
     protected function parseDocCommentDetail($reflection)

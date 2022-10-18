@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Configuration;
@@ -10,8 +7,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function ucfirst;
 
 /**
  * Generates Snapshot.
@@ -24,10 +19,10 @@ use function ucfirst;
  */
 class GenerateSnapshot extends Command
 {
-    use Shared\FileSystemTrait;
-    use Shared\ConfigTrait;
+    use Shared\FileSystem;
+    use Shared\Config;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition([
             new InputArgument('suite', InputArgument::REQUIRED, 'Suite name or snapshot name)'),
@@ -36,19 +31,19 @@ class GenerateSnapshot extends Command
         parent::configure();
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Generates empty Snapshot class';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
-        $suite = (string)$input->getArgument('suite');
+        $suite = $input->getArgument('suite');
         $class = $input->getArgument('snapshot');
 
         if (!$class) {
             $class = $suite;
-            $suite = '';
+            $suite = null;
         }
 
         $conf = $suite
@@ -65,14 +60,14 @@ class GenerateSnapshot extends Command
 
         $output->writeln($filename);
 
-        $snapshot = new SnapshotGenerator($conf, ucfirst($suite) . '\\' . $class);
-        $res = $this->createFile($filename, $snapshot->produce());
+        $gen = new SnapshotGenerator($conf, ucfirst($suite) . '\\' . $class);
+        $res = $this->createFile($filename, $gen->produce());
 
         if (!$res) {
-            $output->writeln("<error>Snapshot {$filename} already exists</error>");
+            $output->writeln("<error>Snapshot $filename already exists</error>");
             return 1;
         }
-        $output->writeln("<info>Snapshot was created in {$filename}</info>");
+        $output->writeln("<info>Snapshot was created in $filename</info>");
         return 0;
     }
 }

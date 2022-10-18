@@ -1,77 +1,56 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Coverage;
 
 use Codeception\Configuration;
 use Codeception\Coverage\Subscriber\Printer;
-use Codeception\Exception\ConfigurationException;
-use Codeception\Lib\Interfaces\Remote as RemoteInterface;
-use Codeception\Subscriber\Shared\StaticEventsTrait;
-use Exception;
+use Codeception\Lib\Interfaces\Remote;
+use Codeception\Stub;
+use Codeception\Subscriber\Shared\StaticEvents;
 use PHPUnit\Framework\CodeCoverageException;
 use SebastianBergmann\CodeCoverage\CodeCoverage;
+use SebastianBergmann\CodeCoverage\Filter as CodeCoverageFilter;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
-use function array_keys;
 
 abstract class SuiteSubscriber implements EventSubscriberInterface
 {
-    use StaticEventsTrait;
+    use StaticEvents;
 
-    protected array $defaultSettings = [
-        'enabled'                      => false,
-        'remote'                       => false,
-        'local'                        => false,
-        'xdebug_session'               => 'codeception',
-        'remote_config'                => null,
-        'show_uncovered'               => false,
-        'c3_url'                       => null,
-        'work_dir'                     => null,
-        'cookie_domain'                => null,
-        'path_coverage'                => false,
-        'strict_covers_annotation'     => false,
-        'ignore_deprecated_code'       => false,
-        'disable_code_coverage_ignore' => false,
+    protected $defaultSettings = [
+        'enabled'        => false,
+        'remote'         => false,
+        'local'          => false,
+        'xdebug_session' => 'codeception',
+        'remote_config'  => null,
+        'show_uncovered' => false,
+        'c3_url'         => null,
+        'work_dir'       => null,
+        'cookie_domain'  => null,
     ];
 
-    protected array $settings = [];
+    protected $settings = [];
+    protected $filters = [];
+    protected $modules = [];
 
-    protected array $filters = [];
-
-    protected array $modules = [];
-
-    protected ?CodeCoverage $coverage = null;
-
-    protected string $logDir;
-
-    public static array $events = [];
+    protected $coverage;
+    protected $logDir;
+    protected $options;
+    public static $events = [];
 
     abstract protected function isEnabled();
 
-    /**
-     * SuiteSubscriber constructor.
-     *
-     * @throws ConfigurationException
-     */
-    public function __construct(protected array $options = [])
+    public function __construct($options = [])
     {
+        $this->options = $options;
         $this->logDir = Configuration::outputDir();
     }
 
-    /**
-     * @throws Exception
-     */
-    protected function applySettings(array $settings): void
+    protected function applySettings($settings)
     {
         try {
             $this->coverage = PhpCodeCoverageFactory::build();
         } catch (CodeCoverageException $e) {
-            throw new Exception(
-                'XDebug is required to collect CodeCoverage. Please install xdebug extension and enable it in php.ini',
-                $e->getCode(),
-                $e
+            throw new \Exception(
+                'XDebug is required to collect CodeCoverage. Please install xdebug extension and enable it in php.ini'
             );
         }
 
@@ -83,41 +62,46 @@ abstract class SuiteSubscriber implements EventSubscriberInterface
                 $this->settings[$key] = $settings['coverage'][$key];
             }
         }
-
-        if ($this->settings['strict_covers_annotation']) {
-            $this->coverage->enableCheckForUnintentionallyCoveredCode();
-        }
-
-        if ($this->settings['ignore_deprecated_code']) {
-            $this->coverage->ignoreDeprecatedCode();
+        if (method_exists($this->coverage, 'setProcessUncoveredFilesFromWhitelist')) {
+            //php-code-coverage 8 or older
+            $this->coverage->setProcessUncoveredFilesFromWhitelist($this->settings['show_uncovered']);
         } else {
-            $this->coverage->doNotIgnoreDeprecatedCode();
-        }
-
-        if ($this->settings['disable_code_coverage_ignore']) {
-            $this->coverage->disableAnnotationsForIgnoringCode();
-        } else {
-            $this->coverage->enableAnnotationsForIgnoringCode();
-        }
-
-        if ($this->settings['show_uncovered']) {
-            $this->coverage->includeUncoveredFiles();
-        } else {
-            $this->coverage->excludeUncoveredFiles();
+            //php-code-coverage 9+
+            if ($this->settings['show_uncovered']) {
+                $this->coverage->processUncoveredFiles();
+            } else {
+                $this->coverage->doNotProcessUncoveredFiles();
+            }
         }
     }
 
-    protected function getServerConnectionModule(array $modules): ?RemoteInterface
+    /**
+     * @param array $modules
+     * @return \Codeception\Lib\Interfaces\Remote|null
+     */
+    protected function getServerConnectionModule(array $modules)
     {
         foreach ($modules as $module) {
-            if ($module instanceof RemoteInterface) {
+            if ($module instanceof Remote) {
                 return $module;
             }
         }
         return null;
     }
 
-    protected function mergeToPrint(CodeCoverage $coverage): void
+    public function applyFilter(\PHPUnit\Framework\TestResult $result)
+    {
+        $driver = Stub::makeEmpty('SebastianBergmann\CodeCoverage\Driver\Driver');
+        $result->setCodeCoverage(new CodeCoverage($driver, new CodeCoverageFilter()));
+
+        Filter::setup($this->coverage)
+            ->whiteList($this->filters)
+            ->blackList($this->filters);
+
+        $result->setCodeCoverage($this->coverage);
+    }
+
+    protected function mergeToPrint($coverage)
     {
         Printer::$coverage->merge($coverage);
     }

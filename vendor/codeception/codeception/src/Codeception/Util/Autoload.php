@@ -1,15 +1,5 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Util;
-
-use function array_unshift;
-use function file_exists;
-use function rtrim;
-use function spl_autoload_register;
-use function str_replace;
-use function trim;
 
 /**
  * Autoloader, which is fully compatible with PSR-4,
@@ -17,13 +7,13 @@ use function trim;
  */
 class Autoload
 {
-    protected static bool $registered = false;
-
+    protected static $registered = false;
     /**
      * An associative array where the key is a namespace prefix and the value
      * is an array of base directories for classes in that namespace.
+     * @var array
      */
-    protected static array $map = [];
+    protected static $map = [];
 
     private function __construct()
     {
@@ -43,14 +33,16 @@ class Autoload
      * Autoload::addNamespace('', '/path/to/pageobjects');
      *
      * Autoload::addNamespace('app\Codeception', '/path/to/controllers');
+     * ?>
      * ```
      *
      * @param string $prefix The namespace prefix.
-     * @param string $baseDir A base directory for class files in the namespace.
+     * @param string $base_dir A base directory for class files in the namespace.
      * @param bool $prepend If true, prepend the base directory to the stack instead of appending it;
      *                      this causes it to be searched first rather than last.
+     * @return void
      */
-    public static function addNamespace(string $prefix, string $baseDir, bool $prepend = false): void
+    public static function addNamespace($prefix, $base_dir, $prepend = false)
     {
         if (!self::$registered) {
             spl_autoload_register([__CLASS__, 'load']);
@@ -61,23 +53,23 @@ class Autoload
         $prefix = trim($prefix, '\\') . '\\';
 
         // normalize the base directory with a trailing separator
-        $baseDir = rtrim($baseDir, '/') . DIRECTORY_SEPARATOR;
-        $baseDir = rtrim($baseDir, DIRECTORY_SEPARATOR) . '/';
+        $base_dir = rtrim($base_dir, '/') . DIRECTORY_SEPARATOR;
+        $base_dir = rtrim($base_dir, DIRECTORY_SEPARATOR) . '/';
 
         // initialize the namespace prefix array
-        if (!isset(self::$map[$prefix])) {
+        if (isset(self::$map[$prefix]) === false) {
             self::$map[$prefix] = [];
         }
 
         // retain the base directory for the namespace prefix
         if ($prepend) {
-            array_unshift(self::$map[$prefix], $baseDir);
+            array_unshift(self::$map[$prefix], $base_dir);
         } else {
-            self::$map[$prefix][] = $baseDir;
+            self::$map[$prefix][] = $base_dir;
         }
     }
 
-    public static function load(string $class): string|false
+    public static function load($class)
     {
         // the current namespace prefix
         $prefix = $class;
@@ -105,7 +97,9 @@ class Autoload
             return self::load('\\' . $class);
         }
 
-        if (str_contains($class, '\\')) {
+        // backwards compatibility with old autoloader
+        // :TODO: it should be removed
+        if (strpos($class, '\\') !== false) {
             $relative_class = substr(strrchr($class, '\\'), 1); // Foo\Bar\ClassName -> ClassName
             $mapped_file = self::loadMappedFile('\\', $relative_class);
             if ($mapped_file) {
@@ -120,18 +114,18 @@ class Autoload
      * Load the mapped file for a namespace prefix and relative class.
      *
      * @param string $prefix The namespace prefix.
-     * @param string $relativeClass The relative class name.
-     * @return string|false Boolean false if no mapped file can be loaded, or the name of the mapped file that was loaded.
+     * @param string $relative_class The relative class name.
+     * @return mixed Boolean false if no mapped file can be loaded, or the name of the mapped file that was loaded.
      */
-    protected static function loadMappedFile(string $prefix, string $relativeClass): string|false
+    protected static function loadMappedFile($prefix, $relative_class)
     {
         if (!isset(self::$map[$prefix])) {
             return false;
         }
 
-        foreach (self::$map[$prefix] as $baseDir) {
-            $file = $baseDir
-                . str_replace('\\', '/', $relativeClass)
+        foreach (self::$map[$prefix] as $base_dir) {
+            $file = $base_dir
+                . str_replace('\\', '/', $relative_class)
                 . '.php';
 
             // 'static' is for testing purposes
@@ -143,7 +137,7 @@ class Autoload
         return false;
     }
 
-    protected static function requireFile($file): bool
+    protected static function requireFile($file)
     {
         if (file_exists($file)) {
             require_once $file;

@@ -116,7 +116,7 @@ class Yii2 extends Client
         }
         Yii::$app = null;
         \yii\web\UploadedFile::reset();
-        if (method_exists(\yii\base\Event::class, 'offAll')) {
+        if (method_exists(\yii\base\Event::className(), 'offAll')) {
             \yii\base\Event::offAll();
         }
         Yii::setLogger(null);
@@ -276,7 +276,7 @@ class Yii2 extends Client
         return is_array($params) ?$this->getApplication()->getUrlManager()->createUrl($params) : $params;
     }
 
-    public function startApp(\yii\log\Logger $logger = null)
+    public function startApp()
     {
         codecept_debug('Starting application');
         $config = require($this->configFile);
@@ -297,12 +297,7 @@ class Yii2 extends Client
         $config = $this->mockMailer($config);
         /** @var \yii\base\Application $app */
         Yii::$app = Yii::createObject($config);
-
-        if ($logger !== null) {
-            Yii::setLogger($logger);
-        } else {
-            Yii::setLogger(new Logger());
-        }
+        Yii::setLogger(new Logger());
     }
 
     /**
@@ -311,7 +306,7 @@ class Yii2 extends Client
      *
      * @return \Symfony\Component\BrowserKit\Response
      */
-    public function doRequest(object $request)
+    public function doRequest($request)
     {
         $_COOKIE = $request->getCookies();
         $_SERVER = $request->getServer();

@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\caching;
@@ -10,7 +10,7 @@ namespace yii\caching;
 /**
  * WinCache provides Windows Cache caching in terms of an application component.
  *
- * To use this application component, the [WinCache PHP extension](https://www.iis.net/downloads/microsoft/wincache-extension)
+ * To use this application component, the [WinCache PHP extension](http://www.iis.net/expand/wincacheforphp)
  * must be loaded. Also note that "wincache.ucenabled" should be set to "On" in your php.ini file.
  *
  * See [[Cache]] manual for common cache operations that are supported by WinCache.

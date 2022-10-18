@@ -1,53 +1,46 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Subscriber;
 
 use Codeception\Event\SuiteEvent;
 use Codeception\Events;
-use Codeception\Test\Test;
-use Codeception\Test\TestCaseWrapper;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
-use function call_user_func;
-use function is_callable;
 
 class BeforeAfterTest implements EventSubscriberInterface
 {
-    use Shared\StaticEventsTrait;
+    use Shared\StaticEvents;
 
-    /**
-     * @var array<string, string|int[]|string[]>
-     */
-    protected static array $events = [
+    public static $events = [
         Events::SUITE_BEFORE => 'beforeClass',
         Events::SUITE_AFTER  => ['afterClass', 100]
     ];
 
-    public function beforeClass(SuiteEvent $event): void
+    protected $hooks = [];
+    protected $startedTests = [];
+    protected $unsuccessfulTests = [];
+
+    public function beforeClass(SuiteEvent $e)
     {
-        foreach ($event->getSuite()->getTests() as $test) {
-            $this->executeMethods($test, $test->getMetadata()->getBeforeClassMethods());
+        foreach ($e->getSuite()->tests() as $test) {
+            /** @var $test \PHPUnit\Framework\Test  * */
+            $testClass = get_class($test);
+            $this->hooks[$testClass] = \PHPUnit\Util\Test::getHookMethods($testClass);
         }
+        $this->runHooks('beforeClass');
     }
 
-    public function afterClass(SuiteEvent $event): void
+
+    public function afterClass(SuiteEvent $e)
     {
-        foreach ($event->getSuite()->getTests() as $test) {
-            $this->executeMethods($test, $test->getMetadata()->getAfterClassMethods());
-        }
+        $this->runHooks('afterClass');
     }
 
-    private function executeMethods(Test $test, array $methods): void
+    protected function runHooks($hookName)
     {
-        if ($test instanceof TestCaseWrapper) {
-            $test = $test->getTestCase();
-        }
-
-        foreach ($methods as $method) {
-            if (is_callable([$test, $method])) {
-                call_user_func([$test, $method]);
+        foreach ($this->hooks as $className => $hook) {
+            foreach ($hook[$hookName] as $method) {
+                if (is_callable([$className, $method])) {
+                    call_user_func([$className, $method]);
+                }
             }
         }
     }

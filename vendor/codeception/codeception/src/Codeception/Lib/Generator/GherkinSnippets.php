@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Generator;
 
 use Behat\Gherkin\Node\StepNode;
@@ -11,7 +8,7 @@ use Symfony\Component\Finder\Finder;
 
 class GherkinSnippets
 {
-    protected string $template = <<<EOF
+    protected $template = <<<EOF
     /**
      * @{{type}} {{text}}
      */
@@ -22,28 +19,17 @@ class GherkinSnippets
 
 EOF;
 
-    /**
-     * @var string[]
-     */
-    protected array $snippets = [];
+    protected $snippets = [];
+    protected $processed = [];
+    protected $features = [];
 
-    /**
-     * @var string[]
-     */
-    protected array $processed = [];
-
-    /**
-     * @var string[]
-     */
-    protected array $features = [];
-
-    public function __construct(array $settings, $test = null)
+    public function __construct($settings, $test = null)
     {
         $loader = new Gherkin($settings);
         $pattern = $loader->getPattern();
         $path = $settings['path'];
         if (!empty($test)) {
-            $path = $settings['path'] . '/' . $test;
+            $path = $settings['path'].'/'.$test;
             if (preg_match($pattern, $test)) {
                 $path = dirname($path);
                 $pattern = basename($test);
@@ -67,6 +53,7 @@ EOF;
             $allSteps = array_merge($allSteps, $stepGroup);
         }
         foreach ($loader->getTests() as $test) {
+            /** @var $test \Codeception\Test\Gherkin  **/
             $steps = $test->getScenarioNode()->getSteps();
             if ($test->getFeatureNode()->hasBackground()) {
                 $steps = array_merge($steps, $test->getFeatureNode()->getBackground()->getSteps());
@@ -95,39 +82,39 @@ EOF;
         }
     }
 
-    public function addSnippet(StepNode $step): void
+    public function addSnippet(StepNode $step)
     {
         $args = [];
         $pattern = $step->getText();
 
         // match numbers (not in quotes)
-        if (preg_match_all('#([\d.])(?=([^"]*"[^"]*")*[^"]*$)#', $pattern, $matches)) {
+        if (preg_match_all('~([\d\.])(?=([^"]*"[^"]*")*[^"]*$)~', $pattern, $matches)) {
             foreach ($matches[1] as $num => $param) {
-                ++$num;
+                $num++;
                 $args[] = '$num' . $num;
-                $pattern = str_replace($param, ":num{$num}", $pattern);
+                $pattern = str_replace($param, ":num$num", $pattern);
             }
         }
 
         // match quoted string
-        if (preg_match_all('#"(.*?)"#', $pattern, $matches)) {
+        if (preg_match_all('~"(.*?)"~', $pattern, $matches)) {
             foreach ($matches[1] as $num => $param) {
-                ++$num;
+                $num++;
                 $args[] = '$arg' . $num;
-                $pattern = str_replace('"' . $param . '"', ":arg{$num}", $pattern);
+                $pattern = str_replace('"'.$param.'"', ":arg$num", $pattern);
             }
         }
         // Has multiline argument at the end of step?
         if (self::stepHasPyStringArgument($step)) {
             $num = count($args) + 1;
-            $pattern .= " :arg{$num}";
+            $pattern .= " :arg$num";
             $args[] = '$arg' . $num;
         }
         if (in_array($pattern, $this->processed)) {
             return;
         }
 
-        $methodName = preg_replace('#(\s+?|\'|\"|\W)#', '', ucwords(preg_replace('#"(.*?)"|\d+#', '', $step->getText())));
+        $methodName = preg_replace('~(\s+?|\'|\"|\W)~', '', ucwords(preg_replace('~"(.*?)"|\d+~', '', $step->getText())));
         if (empty($methodName)) {
             $methodName = 'step_' . substr(sha1($pattern), 0, 9);
         }
@@ -142,23 +129,17 @@ EOF;
         $this->processed[] = $pattern;
     }
 
-    /**
-     * @return string[]
-     */
-    public function getSnippets(): array
+    public function getSnippets()
     {
         return $this->snippets;
     }
 
-    /**
-     * @return string[]
-     */
-    public function getFeatures(): array
+    public function getFeatures()
     {
         return $this->features;
     }
 
-    public static function stepHasPyStringArgument(StepNode $step): bool
+    public static function stepHasPyStringArgument(StepNode $step)
     {
         if ($step->hasArguments()) {
             $stepArgs = $step->getArguments();

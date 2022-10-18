@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\i18n;
@@ -23,7 +23,7 @@ class MissingTranslationEvent extends Event
      */
     public $message;
     /**
-     * @var string|null the translated message. An event handler may overwrite this property
+     * @var string the translated message. An event handler may overwrite this property
      * with a translated version of [[message]] if possible. If not set (null), it means the message is not translated.
      */
     public $translatedMessage;

@@ -1,36 +1,59 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Console;
 
 use SebastianBergmann\Comparator\ComparisonFailure;
 
+/**
+ * MessageFactory
+ **/
 class MessageFactory
 {
-    protected DiffFactory $diffFactory;
+    /**
+     * @var DiffFactory
+     */
+    protected $diffFactory;
+    /**
+     * @var Output
+     */
+    private $output;
 
-    protected Colorizer $colorizer;
+    /**
+     * @var Colorizer
+     */
+    protected $colorizer;
 
-    public function __construct(private Output $output)
+    /**
+     * MessageFactory constructor.
+     * @param Output $output
+     */
+    public function __construct(Output $output)
     {
+        $this->output = $output;
         $this->diffFactory = new DiffFactory();
         $this->colorizer = new Colorizer();
     }
 
-    public function message(string $text = ''): Message
+    /**
+     * @param string $text
+     * @return Message
+     */
+    public function message($text = '')
     {
         return new Message($text, $this->output);
     }
 
-    public function prepareComparisonFailureMessage(ComparisonFailure $failure): string
+    /**
+     * @param ComparisonFailure $failure
+     * @return string
+     */
+    public function prepareComparisonFailureMessage(ComparisonFailure $failure)
     {
         $diff = $this->diffFactory->createDiff($failure);
-        if ($diff === '') {
+        if (!$diff) {
             return '';
         }
         $diff = $this->colorizer->colorize($diff);
 
-        return "\n<comment>- Expected</comment> | <info>+ Actual</info>\n{$diff}";
+        return "\n<comment>- Expected</comment> | <info>+ Actual</info>\n$diff";
     }
 }

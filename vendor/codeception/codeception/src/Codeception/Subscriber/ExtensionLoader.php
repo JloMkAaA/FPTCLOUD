@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Subscriber;
 
 use Codeception\Configuration;
@@ -11,73 +8,53 @@ use Codeception\Exception\ConfigurationException;
 use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use function class_exists;
-use function is_array;
-use function key;
-use function reset;
-
 class ExtensionLoader implements EventSubscriberInterface
 {
-    use Shared\StaticEventsTrait;
+    use Shared\StaticEvents;
 
-    /**
-     * @var array<string, string>
-     */
-    protected static array $events = [
+    public static $events = [
         Events::MODULE_INIT => 'registerSuiteExtensions',
-        Events::SUITE_AFTER => 'stopSuiteExtensions'
+        Events::SUITE_AFTER  => 'stopSuiteExtensions'
     ];
 
-    /**
-     * @var array<string, mixed>
-     */
-    protected array $config = [];
+    protected $config;
+    protected $options = [];
+
+    protected $globalExtensions = [];
+    protected $suiteExtensions = [];
 
     /**
-     * @var array<string, mixed>
+     * @var EventDispatcher
      */
-    protected array $options = [];
+    protected $dispatcher;
 
-    /**
-     * @var array<class-string, EventSubscriberInterface>
-     */
-    protected array $globalExtensions = [];
-
-    /**
-     * @var array<class-string, EventSubscriberInterface>
-     */
-    protected array $suiteExtensions = [];
-
-    public function __construct(protected EventDispatcher $dispatcher)
+    public function __construct(EventDispatcher $dispatcher)
     {
+        $this->dispatcher = $dispatcher;
         $this->config = Configuration::config();
     }
 
-    /**
-     * @param array<string, mixed> $options
-     * @throws ConfigurationException
-     */
-    public function bootGlobalExtensions(array $options): void
+    public function bootGlobalExtensions($options)
     {
         $this->options = $options;
         $this->globalExtensions = $this->bootExtensions($this->config);
     }
 
-    public function registerGlobalExtensions(): void
+    public function registerGlobalExtensions()
     {
         foreach ($this->globalExtensions as $extension) {
             $this->dispatcher->addSubscriber($extension);
         }
     }
 
-    public function registerSuiteExtensions(SuiteEvent $event): void
+    public function registerSuiteExtensions(SuiteEvent $e)
     {
-        $suiteConfig = $event->getSettings();
+        $suiteConfig = $e->getSettings();
         $extensions = $this->bootExtensions($suiteConfig);
 
         $this->suiteExtensions = [];
         foreach ($extensions as $extension) {
-            $extensionClass = $extension::class;
+            $extensionClass = get_class($extension);
             if (isset($this->globalExtensions[$extensionClass])) {
                 continue; // already globally enabled
             }
@@ -86,7 +63,7 @@ class ExtensionLoader implements EventSubscriberInterface
         }
     }
 
-    public function stopSuiteExtensions(): void
+    public function stopSuiteExtensions()
     {
         foreach ($this->suiteExtensions as $extension) {
             $this->dispatcher->removeSubscriber($extension);
@@ -94,12 +71,7 @@ class ExtensionLoader implements EventSubscriberInterface
         $this->suiteExtensions = [];
     }
 
-    /**
-     * @param array<string, mixed> $config
-     * @return array<class-string, EventSubscriberInterface>
-     * @throws ConfigurationException
-     */
-    protected function bootExtensions(array $config): array
+    protected function bootExtensions($config)
     {
         $extensions = [];
 
@@ -109,7 +81,7 @@ class ExtensionLoader implements EventSubscriberInterface
             }
             if (!class_exists($extensionClass)) {
                 throw new ConfigurationException(
-                    "Class `{$extensionClass}` is not defined. Autoload it or include into "
+                    "Class `$extensionClass` is not defined. Autoload it or include into "
                     . "'_bootstrap.php' file of 'tests' directory"
                 );
             }
@@ -118,21 +90,19 @@ class ExtensionLoader implements EventSubscriberInterface
             $extension = new $extensionClass($extensionConfig, $this->options);
             if (!$extension instanceof EventSubscriberInterface) {
                 throw new ConfigurationException(
-                    "Class {$extensionClass} is not an EventListener. Please create it as Extension or GroupObject."
+                    "Class $extensionClass is not an EventListener. Please create it as Extension or GroupObject."
                 );
             }
-            $extensions[$extension::class] = $extension;
+            $extensions[get_class($extension)] = $extension;
         }
         return $extensions;
     }
 
-    /**
-     * @param array<string, mixed> $config
-     * @return array<string, mixed>
-     */
-    private function getExtensionConfig(string $extension, array $config): array
+    private function getExtensionConfig($extension, $config)
     {
-        $extensionConfig = $config['extensions']['config'][$extension] ?? [];
+        $extensionConfig = isset($config['extensions']['config'][$extension])
+            ? $config['extensions']['config'][$extension]
+            : [];
 
         if (!isset($config['extensions']['enabled'])) {
             return $extensionConfig;
@@ -149,11 +119,7 @@ class ExtensionLoader implements EventSubscriberInterface
 
             $enabledExtension = key($enabledExtensionsConfig);
             if ($enabledExtension === $extension) {
-                $enabledExtensionConfig = reset($enabledExtensionsConfig);
-                if (!is_array($enabledExtensionConfig)) {
-                    return $extensionConfig;
-                }
-                return Configuration::mergeConfigs($enabledExtensionConfig, $extensionConfig);
+                return Configuration::mergeConfigs(reset($enabledExtensionsConfig), $extensionConfig);
             }
         }
 

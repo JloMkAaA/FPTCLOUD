@@ -1,52 +1,45 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Step;
 
 use Codeception\Exception\ConditionalAssertionFailed;
 use Codeception\Lib\ModuleContainer;
 use Codeception\Util\Template;
-use PHPUnit\Framework\AssertionFailedError;
-
-use function preg_replace;
-use function str_replace;
-use function ucfirst;
 
 class ConditionalAssertion extends Assertion implements GeneratedStep
 {
-    public function run(ModuleContainer $container = null): void
+    public function run(ModuleContainer $container = null)
     {
         try {
             parent::run($container);
-        } catch (AssertionFailedError $e) {
+        } catch (\PHPUnit\Framework\AssertionFailedError $e) {
             throw new ConditionalAssertionFailed($e->getMessage(), $e->getCode(), $e);
         }
     }
 
-    public function getAction(): string
+    public function getAction()
     {
         $action = 'can' . ucfirst($this->action);
-        return (string)preg_replace('#^canDont#', 'cant', $action);
+        $action = preg_replace('/^canDont/', 'cant', $action);
+        return $action;
     }
 
-    public function getHumanizedAction(): string
+    public function getHumanizedAction()
     {
         return $this->humanize($this->action . ' ' . $this->getHumanizedArguments());
     }
 
-    public static function getTemplate(Template $template): ?Template
+    public static function getTemplate(Template $template)
     {
         $action = $template->getVar('action');
 
-        if ((!str_starts_with($action, 'see')) && (!str_starts_with($action, 'dontSee'))) {
-            return null;
+        if ((0 !== strpos($action, 'see')) && (0 !== strpos($action, 'dontSee'))) {
+            return '';
         }
 
         $conditionalDoc = "* [!] Conditional Assertion: Test won't be stopped on fail\n     " . $template->getVar('doc');
 
         $prefix = 'can';
-        if (str_starts_with($action, 'dontSee')) {
+        if (strpos($action, 'dontSee') === 0) {
             $prefix = 'cant';
             $action = str_replace('dont', '', $action);
         }
@@ -57,8 +50,8 @@ class ConditionalAssertion extends Assertion implements GeneratedStep
             ->place('step', 'ConditionalAssertion');
     }
 
-    public function match(string $name): bool
+    public function match($name)
     {
-        return str_starts_with($name, 'see') || str_starts_with($name, 'dontSee');
+        return 0 === strpos($name, 'see') || 0 === strpos($name, 'dontSee');
     }
 }

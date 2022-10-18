@@ -1,34 +1,26 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Generator;
 
 use Codeception\Exception\ConfigurationException;
-use Codeception\Lib\Generator\Shared\Classname;
 use Codeception\Util\Shared\Namespaces;
 use Codeception\Util\Template;
 
 class StepObject
 {
     use Namespaces;
-    use Classname;
+    use Shared\Classname;
 
-    protected string $template = <<<EOF
+    protected $template = <<<EOF
 <?php
-
-declare(strict_types=1);
-
 namespace {{namespace}};
 
 class {{name}} extends {{actorClass}}
 {
 {{actions}}
 }
-
 EOF;
 
-    protected string $actionTemplate = <<<EOF
+    protected $actionTemplate = <<<EOF
 
     public function {{action}}()
     {
@@ -37,26 +29,27 @@ EOF;
 
 EOF;
 
-    protected string $name;
+    protected $settings;
+    protected $name;
+    protected $actions = '';
 
-    protected string $actions = '';
-
-    public string $namespace;
-
-    public function __construct(protected array $settings, string $name)
+    public function __construct($settings, $name)
     {
+        $this->settings = $settings;
         $this->name = $this->getShortClassName($name);
-        $this->namespace = $this->getNamespaceString($this->supportNamespace() . 'Step\\' . $name);
+        $this->namespace = $this->getNamespaceString($this->settings['namespace'] . '\\Step\\' . $name);
     }
 
-    public function produce(): string
+    public function produce()
     {
         $actor = $this->settings['actor'];
         if (!$actor) {
             throw new ConfigurationException("Steps can't be created for suite without an actor");
         }
+        $ns = $this->getNamespaceString($this->settings['namespace'] . '\\' . $actor . '\\' . $this->name);
+        $ns = ltrim($ns, '\\');
 
-        $extended = '\\' . ltrim($this->supportNamespace() . $actor, '\\');
+        $extended = '\\' . ltrim('\\' . $this->settings['namespace'] . '\\' . $actor, '\\');
 
         return (new Template($this->template))
             ->place('namespace', $this->namespace)
@@ -66,7 +59,7 @@ EOF;
             ->produce();
     }
 
-    public function createAction($action): void
+    public function createAction($action)
     {
         $this->actions .= (new Template($this->actionTemplate))
             ->place('action', $action)

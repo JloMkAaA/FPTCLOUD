@@ -5,10 +5,10 @@
  * This file contains most commonly used MIME types
  * according to file extension names.
  * Its content is generated from the apache http mime.types file.
- * https://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=markup
+ * http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=markup
  * This file has been placed in the public domain for unlimited redistribution.
  */
-$mimeTypes = [
+return [
     '3dml' => 'text/vnd.in3d.3dml',
     '3ds' => 'image/x-3ds',
     '3g2' => 'video/3gpp2',
@@ -355,7 +355,6 @@ $mimeTypes = [
     'jam' => 'application/vnd.jam',
     'jar' => 'application/java-archive',
     'java' => 'text/x-java-source',
-    'jfif' => 'image/jpeg',
     'jisp' => 'application/vnd.jisp',
     'jlt' => 'application/vnd.hp-jlyt',
     'jnlp' => 'application/x-java-jnlp-file',
@@ -996,9 +995,3 @@ $mimeTypes = [
     'zirz' => 'application/vnd.zul',
     'zmm' => 'application/vnd.handheld-entertainment+xml',
 ];
-
-if (PHP_VERSION_ID >= 80100) {
-    $mimeTypes = array_replace($mimeTypes, array('xz' => 'application/octet-stream'));
-}
-
-return $mimeTypes;

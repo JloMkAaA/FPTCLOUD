@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\validators;
@@ -32,8 +32,9 @@ use yii\web\JsExpression;
  * ['ip_address', 'ip', 'expandIPv6' => true], // expands IPv6 address to a full notation format
  * ```
  *
- * @property array $ranges The IPv4 or IPv6 ranges that are allowed or forbidden. Note that the type of this
- * property differs in getter and setter. See [[getRanges()]] and [[setRanges()]] for details.
+ * @property array $ranges The IPv4 or IPv6 ranges that are allowed or forbidden. See [[setRanges()]] for
+ * detailed description. Note that the type of this property differs in getter and setter. See [[getRanges()]]
+ * and [[setRanges()]] for details.
  *
  * @author Dmitry Naumenko <d.naumenko.a@gmail.com>
  * @since 2.0.7
@@ -85,7 +86,7 @@ class IpValidator extends Validator
      */
     public $ipv4 = true;
     /**
-     * @var bool|null whether the address can be an IP with CIDR subnet, like `192.168.10.0/24`.
+     * @var bool whether the address can be an IP with CIDR subnet, like `192.168.10.0/24`.
      * The following values are possible:
      *
      * - `false` - the address must not have a subnet (default).
@@ -162,7 +163,7 @@ class IpValidator extends Validator
      */
     public $wrongCidr;
     /**
-     * @var string|null user-defined error message is used when validation fails due to subnet [[subnet]] set to 'only',
+     * @var string user-defined error message is used when validation fails due to subnet [[subnet]] set to 'only',
      * but the CIDR prefix is not set.
      *
      * You may use the following placeholders in the message:
@@ -245,7 +246,9 @@ class IpValidator extends Validator
      * - Recursively substitutes aliases (described in [[networks]]) with their values.
      * - Removes duplicates
      *
-     * @param array|string|null $ranges the IPv4 or IPv6 ranges that are allowed or forbidden.
+     * @property array the IPv4 or IPv6 ranges that are allowed or forbidden.
+     * See [[setRanges()]] for detailed description.
+     * @param array|string $ranges the IPv4 or IPv6 ranges that are allowed or forbidden.
      *
      * When the array is empty, or the option not set, all IP addresses are allowed.
      *

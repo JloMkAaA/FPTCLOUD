@@ -1,5 +1,4 @@
 <?php
-
 namespace Codeception\Lib\Interfaces;
 
 /**
@@ -22,5 +21,5 @@ namespace Codeception\Lib\Interfaces;
  */
 interface PartedModule
 {
-    public function _parts(): array;
+    public function _parts();
 }

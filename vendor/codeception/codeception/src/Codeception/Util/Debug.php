@@ -1,15 +1,11 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Util;
 
-use Codeception\Command\Console;
 use Codeception\Lib\Console\Output;
-use Codeception\Lib\PauseShell;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Symfony\Component\Console\Question\Question;
 
 /**
  * This class is used only when Codeception is executed in `--debug` mode.
@@ -17,17 +13,22 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
  */
 class Debug
 {
-    protected static ?Output $output = null;
+    /**
+     * @var Output null
+     */
+    protected static $output = null;
 
-    public static function setOutput(Output $output): void
+    public static function setOutput(Output $output)
     {
         self::$output = $output;
     }
 
     /**
      * Prints data to screen. Message can be any time of data
+     *
+     * @param $message
      */
-    public static function debug(mixed $message): void
+    public static function debug($message)
     {
         if (!self::$output) {
             return;
@@ -35,38 +36,9 @@ class Debug
         self::$output->debug($message);
     }
 
-    public static function isEnabled(): bool
+    public static function isEnabled()
     {
-        return (bool)self::$output;
-    }
-
-    public static function pause(array $vars = []): void
-    {
-        if (!self::isEnabled()) {
-            return;
-        }
-
-        $pauseShell = new PauseShell();
-        $psy = $pauseShell->getShell();
-        $psy->setScopeVariables($vars);
-        $backtrace = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT, 3);
-        foreach ($backtrace as $backtraceStep) {
-            $class = $backtraceStep['class'] ?? null;
-            $fn = $backtraceStep['function'] ?? null;
-            if ($class === Debug::class && $fn === 'pause') {
-                continue;
-            }
-            if ($fn === 'codecept_pause' && !$class) {
-                continue;
-            }
-            if (!isset($backtraceStep['object'])) {
-                continue;
-            }
-            $pauseShell->addMessage('Use $this-> to access current object');
-            $psy->setBoundObject($backtraceStep['object']);
-            break;
-        }
-        $psy->run();
+        return (bool) self::$output;
     }
 
     public static function confirm($question)

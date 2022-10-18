@@ -1,32 +1,18 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Exception;
 
-use Exception;
-
-use function is_object;
-use function ltrim;
-use function str_replace;
-
-class ModuleException extends Exception
+class ModuleException extends \Exception
 {
-    protected string $module;
+    protected $module;
 
-    /**
-     * ModuleException constructor.
-     *
-     * @param object|string $module
-     */
-    public function __construct($module, string $message)
+    public function __construct($module, $message)
     {
         if (is_object($module)) {
-            $module = $module::class;
+            $module = get_class($module);
         }
         $module = ltrim(str_replace('Codeception\Module\\', '', $module), '\\');
         $this->module = $module;
         parent::__construct($message);
-        $this->message = "{$module}: {$this->message}";
+        $this->message = "$module: {$this->message}";
     }
 }

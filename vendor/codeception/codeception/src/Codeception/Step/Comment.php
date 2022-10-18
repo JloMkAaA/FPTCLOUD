@@ -1,42 +1,37 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Step;
 
 use Codeception\Lib\ModuleContainer;
 use Codeception\Step as CodeceptionStep;
 
-use function mb_strcut;
-
 class Comment extends CodeceptionStep
 {
-    public function __toString(): string
+    public function __toString()
     {
-        return $this->getAction();
+        return (string) $this->getAction();
     }
 
-    public function toString(int $maxLength): string
+    public function toString($maxLength)
     {
-        return mb_strcut((string)$this, 0, $maxLength, 'utf-8');
+        return mb_strcut($this->__toString(), 0, $maxLength, 'utf-8');
     }
 
-    public function getHtml(string $highlightColor = '#732E81'): string
+    public function getHtml($highlightColor = '#732E81')
     {
         return '<strong>' . $this->getAction() . '</strong>';
     }
 
-    public function getPhpCode(int $maxLength): string
+    public function getPhpCode($maxLength)
     {
         return '// ' . $this->getAction();
     }
 
-    public function run(ModuleContainer $container = null): void
+    public function run(ModuleContainer $container = null)
     {
         // don't do anything, let's rest
     }
 
-    public function getPrefix(): string
+    public function getPrefix()
     {
         return '';
     }

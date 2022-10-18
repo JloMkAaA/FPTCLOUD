@@ -1,31 +1,16 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Generator;
 
 use Codeception\Configuration;
 use Codeception\Lib\Di;
-use Codeception\Lib\Friend;
-use Codeception\Lib\Generator\Shared\Classname;
 use Codeception\Lib\ModuleContainer;
 use Codeception\Util\ReflectionHelper;
 use Codeception\Util\Template;
-use ReflectionClass;
-use ReflectionMethod;
 
 class Actor
 {
-    use Classname;
-
-    public Di $di;
-
-    public ModuleContainer $moduleContainer;
-
-    protected string $template = <<<EOF
+    protected $template = <<<EOF
 <?php
-
-declare(strict_types=1);
 {{hasNamespace}}
 
 /**
@@ -45,14 +30,15 @@ class {{actor}} extends \Codeception\Actor
 
 EOF;
 
-    protected string $inheritedMethodTemplate = ' * @method {{return}} {{method}}({{params}})';
+    protected $inheritedMethodTemplate = ' * @method {{return}} {{method}}({{params}})';
 
-    protected array $modules = [];
+    protected $settings;
+    protected $modules;
+    protected $actions;
 
-    protected array $actions = [];
-
-    public function __construct(protected array $settings)
+    public function __construct($settings)
     {
+        $this->settings = $settings;
         $this->di = new Di();
         $this->moduleContainer = new ModuleContainer($this->di, $settings);
 
@@ -65,23 +51,27 @@ EOF;
         $this->actions = $this->moduleContainer->getActions();
     }
 
-    public function produce(): string
+    public function produce()
     {
-        $namespace = trim($this->supportNamespace(), '\\');
+        $namespace = rtrim($this->settings['namespace'], '\\');
+
+        if (!isset($this->settings['actor']) && isset($this->settings['class_name'])) {
+            $this->settings['actor'] = $this->settings['class_name'];
+        }
 
         return (new Template($this->template))
-            ->place('hasNamespace', $namespace !== '' ? "\nnamespace {$namespace};" : '')
+            ->place('hasNamespace', $namespace ? "namespace $namespace;" : '')
             ->place('actor', $this->settings['actor'])
             ->place('inheritedMethods', $this->prependAbstractActorDocBlocks())
             ->produce();
     }
 
-    protected function prependAbstractActorDocBlocks(): string
+    protected function prependAbstractActorDocBlocks()
     {
         $inherited = [];
 
-        $class = new ReflectionClass(\Codeception\Actor::class);
-        $methods = $class->getMethods(ReflectionMethod::IS_PUBLIC);
+        $class = new \ReflectionClass('\Codeception\\Actor');
+        $methods = $class->getMethods(\ReflectionMethod::IS_PUBLIC);
 
         foreach ($methods as $method) {
             if ($method->name == '__call') {
@@ -92,7 +82,7 @@ EOF;
             } // skipping magic
             $returnType = 'void';
             if ($method->name == 'haveFriend') {
-                $returnType = Friend::class;
+                $returnType = '\Codeception\Lib\Friend';
             }
             $params = $this->getParamsString($method);
             $inherited[] = (new Template($this->inheritedMethodTemplate))
@@ -105,7 +95,11 @@ EOF;
         return implode("\n", $inherited);
     }
 
-    protected function getParamsString(ReflectionMethod $refMethod): string
+    /**
+     * @param \ReflectionMethod $refMethod
+     * @return array
+     */
+    protected function getParamsString(\ReflectionMethod $refMethod)
     {
         $params = [];
         foreach ($refMethod->getParameters() as $param) {
@@ -113,7 +107,7 @@ EOF;
                 $params[] = '$' . $param->name . ' = ' . ReflectionHelper::getDefaultValue($param);
             } else {
                 $params[] = '$' . $param->name;
-            }
+            };
         }
         return implode(', ', $params);
     }
@@ -123,10 +117,7 @@ EOF;
         return $this->settings['actor'];
     }
 
-    /**
-     * @return string[]
-     */
-    public function getModules(): array
+    public function getModules()
     {
         return array_keys($this->modules);
     }

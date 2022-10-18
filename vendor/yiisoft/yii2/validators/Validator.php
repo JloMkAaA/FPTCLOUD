@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\validators;
@@ -41,7 +41,7 @@ use yii\base\NotSupportedException;
  * - `required`: [[RequiredValidator]]
  * - `safe`: [[SafeValidator]]
  * - `string`: [[StringValidator]]
- * - `trim`: [[TrimValidator]]
+ * - `trim`: [[FilterValidator]]
  * - `unique`: [[UniqueValidator]]
  * - `url`: [[UrlValidator]]
  * - `ip`: [[IpValidator]]
@@ -49,7 +49,7 @@ use yii\base\NotSupportedException;
  * For more details and usage information on Validator, see the [guide article on validators](guide:input-validation).
  *
  * @property-read array $attributeNames Attribute names.
- * @property-read array|null $validationAttributes List of attribute names.
+ * @property-read array $validationAttributes List of attribute names.
  *
  * @author Qiang Xue <qiang.xue@gmail.com>
  * @since 2.0
@@ -91,7 +91,8 @@ class Validator extends Component
         'safe' => 'yii\validators\SafeValidator',
         'string' => 'yii\validators\StringValidator',
         'trim' => [
-            'class' => 'yii\validators\TrimValidator',
+            'class' => 'yii\validators\FilterValidator',
+            'filter' => 'trim',
             'skipOnArray' => true,
         ],
         'unique' => 'yii\validators\UniqueValidator',
@@ -104,7 +105,7 @@ class Validator extends Component
      */
     public $attributes = [];
     /**
-     * @var string|null the user-defined error message. It may contain the following placeholders which
+     * @var string the user-defined error message. It may contain the following placeholders which
      * will be replaced accordingly by the validator:
      *
      * - `{attribute}`: the label of the attribute being validated
@@ -144,14 +145,14 @@ class Validator extends Component
      */
     public $enableClientValidation = true;
     /**
-     * @var callable|null a PHP callable that replaces the default implementation of [[isEmpty()]].
+     * @var callable a PHP callable that replaces the default implementation of [[isEmpty()]].
      * If not set, [[isEmpty()]] will be used to check if a value is empty. The signature
      * of the callable should be `function ($value)` which returns a boolean indicating
      * whether the value is empty.
      */
     public $isEmpty;
     /**
-     * @var callable|null a PHP callable whose return value determines whether this validator should be applied.
+     * @var callable a PHP callable whose return value determines whether this validator should be applied.
      * The signature of the callable should be `function ($model, $attribute)`, where `$model` and `$attribute`
      * refer to the model and the attribute currently being validated. The callable should return a boolean value.
      *
@@ -170,7 +171,7 @@ class Validator extends Component
      */
     public $when;
     /**
-     * @var string|null a JavaScript function name whose return value determines whether this validator should be applied
+     * @var string a JavaScript function name whose return value determines whether this validator should be applied
      * on the client-side. The signature of the function should be `function (attribute, value)`, where
      * `attribute` is an object describing the attribute being validated (see [[clientValidateAttribute()]])
      * and `value` the current value of the attribute.
@@ -271,7 +272,7 @@ class Validator extends Component
      * - If this is a string or an array, the intersection of [[getAttributeNames()]]
      *   and the specified attributes will be returned.
      *
-     * @return array|null list of attribute names.
+     * @return array list of attribute names.
      * @since 2.0.16
      */
     public function getValidationAttributes($attributes = null)
@@ -313,7 +314,7 @@ class Validator extends Component
      * Validates a given value.
      * You may use this method to validate a value out of the context of a data model.
      * @param mixed $value the data value to be validated.
-     * @param string|null $error the error message to be returned, if the validation fails.
+     * @param string $error the error message to be returned, if the validation fails.
      * @return bool whether the data is valid.
      */
     public function validate($value, &$error = null)

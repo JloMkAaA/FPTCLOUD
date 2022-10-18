@@ -1,16 +1,17 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Codeception\Lib\Console;
 
 class ReplHistory
 {
-    protected string $outputFile;
+    protected $outputFile;
 
-    protected array $stashedCommands = [];
+    protected $stashedCommands = [];
 
-    protected static ?self $instance = null;
+    /**
+     * @var ReplHistory
+     */
+    protected static $instance;
 
     private function __construct()
     {
@@ -21,31 +22,34 @@ class ReplHistory
         }
     }
 
-    public static function getInstance(): ReplHistory
+    /**
+     * @return ReplHistory
+     */
+    public static function getInstance()
     {
         if (static::$instance == null) {
-            static::$instance = new self();
+            static::$instance = new static();
         }
 
         return static::$instance;
     }
 
-    public function add($command): void
+    public function add($command)
     {
         $this->stashedCommands[] = $command;
     }
 
-    public function getAll(): array
+    public function getAll()
     {
         return $this->stashedCommands;
     }
 
-    public function clear(): void
+    public function clear()
     {
         $this->stashedCommands = [];
     }
 
-    public function save(): void
+    public function save()
     {
         if (empty($this->stashedCommands)) {
             return;

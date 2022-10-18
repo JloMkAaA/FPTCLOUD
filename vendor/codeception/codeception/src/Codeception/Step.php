@@ -1,50 +1,50 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception;
 
-use Closure;
 use Codeception\Lib\ModuleContainer;
 use Codeception\Step\Argument\FormattedOutput;
 use Codeception\Step\Meta as MetaStep;
 use Codeception\Util\Locator;
-use Exception;
 use PHPUnit\Framework\MockObject\MockObject;
-use RuntimeException;
-use Stringable;
 
-abstract class Step implements Stringable
+abstract class Step
 {
+    const DEFAULT_MAX_LENGTH = 200;
+
+    const STACK_POSITION = 3;
     /**
-     * @var int
+     * @var    string
      */
-    public const DEFAULT_MAX_LENGTH = 200;
+    protected $action;
 
     /**
-     * @var int
+     * @var    array
      */
-    public const STACK_POSITION = 3;
+    protected $arguments;
 
-    public bool $executed = false;
+    protected $debugOutput;
 
-    protected string|int|null $line = null;
+    public $executed = false;
 
-    protected ?string $file = null;
+    protected $line = null;
+    protected $file = null;
+    protected $prefix = 'I';
 
-    protected string $prefix = 'I';
+    /**
+     * @var MetaStep
+     */
+    protected $metaStep = null;
 
-    protected ?MetaStep $metaStep = null;
+    protected $failed = false;
+    protected $isTry = false;
 
-    protected bool $failed = false;
-
-    protected bool $isTry = false;
-
-    public function __construct(protected string $action, protected array $arguments = [])
+    public function __construct($action, array $arguments = [])
     {
+        $this->action = $action;
+        $this->arguments = $arguments;
     }
 
-    public function saveTrace(): void
+    public function saveTrace()
     {
         $stack = debug_backtrace(DEBUG_BACKTRACE_PROVIDE_OBJECT);
 
@@ -63,49 +63,57 @@ abstract class Step implements Stringable
         $this->addMetaStep($traceLine, $stack);
     }
 
-    private function isTestFile(string $file)
+    private function isTestFile($file)
     {
-        return preg_match('#[^\\' . DIRECTORY_SEPARATOR . '](Cest|Cept|Test).php$#', $file);
+        return preg_match('~[^\\'.DIRECTORY_SEPARATOR.'](Cest|Cept|Test).php$~', $file);
     }
 
-    public function getName(): string
+    public function getName()
     {
         $class = explode('\\', __CLASS__);
         return end($class);
     }
 
-    public function getAction(): string
+    public function getAction()
     {
         return $this->action;
     }
 
-    public function getFilePath(): ?string
+    /**
+     * @deprecated To be removed in Codeception 5.0
+     */
+    public function getLine()
+    {
+        if ($this->line && $this->file) {
+            return codecept_relative_path($this->file) . ':' . $this->line;
+        }
+    }
+
+    public function getFilePath()
     {
         if ($this->file) {
             return codecept_relative_path($this->file);
         }
-        return null;
     }
 
-    public function getLineNumber(): ?int
+    public function getLineNumber()
     {
         if ($this->line) {
             return $this->line;
         }
-        return null;
     }
 
-    public function hasFailed(): bool
+    public function hasFailed()
     {
         return $this->failed;
     }
 
-    public function getArguments(): array
+    public function getArguments()
     {
         return $this->arguments;
     }
 
-    public function getArgumentsAsString(int $maxLength = self::DEFAULT_MAX_LENGTH): string
+    public function getArgumentsAsString($maxLength = self::DEFAULT_MAX_LENGTH)
     {
         $arguments = $this->arguments;
 
@@ -120,7 +128,7 @@ abstract class Step implements Stringable
 
         if ($totalLength > $maxLength && $maxLength > 0) {
             //sort arguments from shortest to longest
-            uasort($arguments, function ($arg1, $arg2): int {
+            uasort($arguments, function ($arg1, $arg2) {
                 $length1 = mb_strlen($arg1, 'utf-8');
                 $length2 = mb_strlen($arg2, 'utf-8');
                 if ($length1 === $length2) {
@@ -134,12 +142,12 @@ abstract class Step implements Stringable
             $lengthRemaining = $maxLength;
             $argumentsRemaining = $argumentCount;
             foreach ($arguments as $key => $argument) {
-                --$argumentsRemaining;
+                $argumentsRemaining--;
                 if (mb_strlen($argument, 'utf-8') > $allowedLength) {
-                    $arguments[$key] = mb_substr($argument, 0, (int)$allowedLength - 4, 'utf-8') . '...' . mb_substr($argument, -1, 1, 'utf-8');
+                    $arguments[$key] = mb_substr($argument, 0, $allowedLength - 4, 'utf-8') . '...' . mb_substr($argument, -1, 1, 'utf-8');
                     $lengthRemaining -= ($allowedLength + 1);
                 } else {
-                    $lengthRemaining -= (mb_strlen($argument, 'utf-8') + 1);
+                    $lengthRemaining -= (mb_strlen($arguments[$key], 'utf-8') + 1);
                     //recalculate allowed length because this argument was short
                     if ($argumentsRemaining > 0) {
                         $allowedLength = floor(($lengthRemaining - $argumentsRemaining + 1) / $argumentsRemaining);
@@ -154,7 +162,7 @@ abstract class Step implements Stringable
         return implode(',', $arguments);
     }
 
-    protected function stringifyArgument(mixed $argument): string
+    protected function stringifyArgument($argument)
     {
         if (is_string($argument)) {
             return '"' . strtr($argument, ["\n" => '\n', "\r" => '\r', "\t" => ' ']) . '"';
@@ -171,58 +179,65 @@ abstract class Step implements Stringable
                 $argument = $argument->getOutput();
             } elseif (method_exists($argument, '__toString')) {
                 $argument = (string)$argument;
-            } elseif ($argument::class == 'Facebook\WebDriver\WebDriverBy') {
+            } elseif (get_class($argument) == 'Facebook\WebDriver\WebDriverBy') {
                 $argument = Locator::humanReadableString($argument);
             } else {
                 $argument = $this->getClassName($argument);
             }
         }
-        $arg_str = json_encode($argument, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
-        return str_replace('\"', '"', $arg_str);
+        $arg_str = json_encode($argument, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+        $arg_str = str_replace('\"', '"', $arg_str);
+        return $arg_str;
     }
 
-    protected function getClassName(object $argument): string
+    protected function getClassName($argument)
     {
-        if ($argument instanceof Closure) {
-            return Closure::class;
-        } elseif ($argument instanceof MockObject && (property_exists($argument, '__mocked') && $argument->__mocked !== null)) {
+        if ($argument instanceof \Closure) {
+            return 'Closure';
+        } elseif ($argument instanceof MockObject && isset($argument->__mocked)) {
             return $this->formatClassName($argument->__mocked);
         }
 
-        return $this->formatClassName($argument::class);
+        return $this->formatClassName(get_class($argument));
     }
 
-    protected function formatClassName(string $classname): string
+    protected function formatClassName($classname)
     {
         return trim($classname, "\\");
     }
 
-    public function getPhpCode(int $maxLength): string
+    public function getPhpCode($maxLength)
     {
         $result = "\${$this->prefix}->" . $this->getAction() . '(';
         $maxLength = $maxLength - mb_strlen($result, 'utf-8') - 1;
-        return $result . ($this->getHumanizedArguments($maxLength) . ')');
+
+        $result .= $this->getHumanizedArguments($maxLength) .')';
+        return $result;
     }
 
-    public function getMetaStep(): ?MetaStep
+    /**
+     * @return MetaStep
+     */
+    public function getMetaStep()
     {
         return $this->metaStep;
     }
 
-    public function __toString(): string
+    public function __toString()
     {
         $humanizedAction = $this->humanize($this->getAction());
         return $humanizedAction . ' ' . $this->getHumanizedArguments();
     }
 
-    public function toString(int $maxLength): string
+
+    public function toString($maxLength)
     {
         $humanizedAction = $this->humanize($this->getAction());
         $maxLength = $maxLength - mb_strlen($humanizedAction, 'utf-8') - 1;
         return $humanizedAction . ' ' . $this->getHumanizedArguments($maxLength);
     }
 
-    public function getHtml(string $highlightColor = '#732E81'): string
+    public function getHtml($highlightColor = '#732E81')
     {
         if (empty($this->arguments)) {
             return sprintf('%s %s', ucfirst($this->prefix), $this->humanize($this->getAction()));
@@ -231,65 +246,66 @@ abstract class Step implements Stringable
         return sprintf('%s %s <span style="color: %s">%s</span>', ucfirst($this->prefix), htmlspecialchars($this->humanize($this->getAction()), ENT_QUOTES | ENT_SUBSTITUTE), $highlightColor, htmlspecialchars($this->getHumanizedArguments(0), ENT_QUOTES | ENT_SUBSTITUTE));
     }
 
-    public function getHumanizedActionWithoutArguments(): string
+    public function getHumanizedActionWithoutArguments()
     {
         return $this->humanize($this->getAction());
     }
 
-    public function getHumanizedArguments(int $maxLength = self::DEFAULT_MAX_LENGTH): string
+    public function getHumanizedArguments($maxLength = self::DEFAULT_MAX_LENGTH)
     {
         return $this->getArgumentsAsString($maxLength);
     }
 
-    protected function clean(string $text): string
+    protected function clean($text)
     {
         return str_replace('\/', '', $text);
     }
 
-    protected function humanize(string $text): string
+    protected function humanize($text)
     {
-        $text = preg_replace('#([A-Z]+)([A-Z][a-z])#', '\\1 \\2', $text);
-        $text = preg_replace('#([a-z\d])([A-Z])#', '\\1 \\2', $text);
-        $text = preg_replace('#\bdont\b#', "don't", $text);
+        $text = preg_replace('/([A-Z]+)([A-Z][a-z])/', '\\1 \\2', $text);
+        $text = preg_replace('/([a-z\d])([A-Z])/', '\\1 \\2', $text);
+        $text = preg_replace('~\bdont\b~', 'don\'t', $text);
         return mb_strtolower($text, 'UTF-8');
     }
 
-    /**
-     * @return mixed
-     */
     public function run(ModuleContainer $container = null)
     {
         $this->executed = true;
-        if ($container === null) {
+        if (!$container) {
             return null;
         }
         $activeModule = $container->moduleForAction($this->action);
 
         if (!is_callable([$activeModule, $this->action])) {
-            throw new RuntimeException("Action '{$this->action}' can't be called");
+            throw new \RuntimeException("Action '{$this->action}' can't be called");
         }
 
         try {
             $res = call_user_func_array([$activeModule, $this->action], $this->arguments);
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             if ($this->isTry) {
                 throw $e;
             }
             $this->failed = true;
-            $this->getMetaStep()?->setFailed(true);
+            if ($this->getMetaStep()) {
+                $this->getMetaStep()->setFailed(true);
+            }
             throw $e;
         }
-
         return $res;
     }
 
     /**
      * If steps are combined into one method they can be reproduced as meta-step.
      * We are using stack trace to analyze if steps were called from test, if not - they were called from meta-step.
+     *
+     * @param $step
+     * @param $stack
      */
-    protected function addMetaStep(array $step, array $stack): void
+    protected function addMetaStep($step, $stack)
     {
-        if (($this->isTestFile($this->file)) || ($step['class'] == Scenario::class)) {
+        if (($this->isTestFile($this->file)) || ($step['class'] == 'Codeception\Scenario')) {
             return;
         }
 
@@ -298,8 +314,8 @@ abstract class Step implements Stringable
         // get into test file and retrieve its actual call
         while (isset($stack[$i])) {
             $step = $stack[$i];
-            --$i;
-            if (!isset($step['file']) || !isset($step['function']) || !isset($step['class'])) {
+            $i--;
+            if (!isset($step['file']) or !isset($step['function']) or !isset($step['class'])) {
                 continue;
             }
 
@@ -308,13 +324,15 @@ abstract class Step implements Stringable
             }
 
             // in case arguments were passed by reference, copy args array to ensure dereference.  array_values() does not dereference values
-            $this->metaStep = new Step\Meta($step['function'], array_map(fn ($i) => $i, array_values($step['args'])));
+            $this->metaStep = new Step\Meta($step['function'], array_map(function ($i) {
+                return $i;
+            }, array_values($step['args'])));
             $this->metaStep->setTraceInfo($step['file'], $step['line']);
 
-            // page objects or other classes should not be included with "I"
-            if (!in_array(Actor::class, class_parents($step['class']))) {
+            // pageobjects or other classes should not be included with "I"
+            if (!in_array('Codeception\Actor', class_parents($step['class']))) {
                 if (isset($step['object'])) {
-                    $this->metaStep->setPrefix($step['object']::class . ':');
+                    $this->metaStep->setPrefix(get_class($step['object']) . ':');
                     return;
                 }
 
@@ -324,12 +342,18 @@ abstract class Step implements Stringable
         }
     }
 
-    public function setMetaStep(?MetaStep $metaStep): void
+    /**
+     * @param MetaStep $metaStep
+     */
+    public function setMetaStep($metaStep)
     {
         $this->metaStep = $metaStep;
     }
 
-    public function getPrefix(): string
+    /**
+     * @return string
+     */
+    public function getPrefix()
     {
         return $this->prefix . ' ';
     }

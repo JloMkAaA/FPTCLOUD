@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\validators;
@@ -35,7 +35,7 @@ class UrlValidator extends Validator
      */
     public $validSchemes = ['http', 'https'];
     /**
-     * @var string|null the default URI scheme. If the input doesn't contain the scheme part, the default
+     * @var string the default URI scheme. If the input doesn't contain the scheme part, the default
      * scheme will be prepended to it (thus changing the input). Defaults to null, meaning a URL must
      * contain the scheme part.
      */

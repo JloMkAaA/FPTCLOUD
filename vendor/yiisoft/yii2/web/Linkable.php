@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\web;
@@ -27,10 +27,10 @@ interface Linkable
      *
      * ```php
      * [
-     *     'self' => 'https://example.com/users/1',
+     *     'self' => 'http://example.com/users/1',
      *     'friends' => [
-     *         'https://example.com/users/2',
-     *         'https://example.com/users/3',
+     *         'http://example.com/users/2',
+     *         'http://example.com/users/3',
      *     ],
      *     'manager' => $managerLink, // $managerLink is a Link object
      * ]

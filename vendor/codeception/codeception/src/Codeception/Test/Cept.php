@@ -1,17 +1,9 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Test;
 
 use Codeception\Exception\TestParseException;
-use Codeception\Lib\Console\Message;
 use Codeception\Lib\Parser;
-use Exception;
-use ParseError;
-
-use function basename;
-use function file_get_contents;
+use Codeception\Lib\Console\Message;
 
 /**
  * Executes tests delivered in Cept format.
@@ -21,9 +13,12 @@ class Cept extends Test implements Interfaces\Plain, Interfaces\ScenarioDriven, 
 {
     use Feature\ScenarioLoader;
 
-    protected Parser $parser;
+    /**
+     * @var Parser
+     */
+    protected $parser;
 
-    public function __construct(string $name, string $file)
+    public function __construct($name, $file)
     {
         $metadata = new Metadata();
         $metadata->setName($name);
@@ -33,45 +28,39 @@ class Cept extends Test implements Interfaces\Plain, Interfaces\ScenarioDriven, 
         $this->parser = new Parser($this->getScenario(), $this->getMetadata());
     }
 
-    public function preload(): void
+    public function preload()
     {
         $this->getParser()->prepareToRun($this->getSourceCode());
     }
 
-    public function test(): void
+    public function test()
     {
         $scenario = $this->getScenario();
         $testFile = $this->getMetadata()->getFilename();
+        /** @noinspection PhpIncludeInspection */
         try {
             require $testFile;
-        } catch (ParseError $error) {
-            throw new TestParseException($testFile, $error->getMessage(), $error->getLine());
+        } catch (\ParseError $e) {
+            throw new TestParseException($testFile, $e->getMessage(), $e->getLine());
         }
     }
 
-    public function getSignature(): string
+    public function getSignature()
     {
         return $this->getMetadata()->getName() . 'Cept';
     }
 
-    public function toString(): string
+    public function toString()
     {
         return $this->getSignature() . ': ' . Message::ucfirst($this->getFeature());
     }
 
-    public function getSourceCode(): string
+    public function getSourceCode()
     {
-        $fileName = $this->getFileName();
-        if (!$sourceCode = file_get_contents($fileName)) {
-            throw new Exception("Could not get content of file {$fileName}, please check its permissions.");
-        }
-        return $sourceCode;
+        return file_get_contents($this->getFileName());
     }
 
-    /**
-     * @return array<string, string>
-     */
-    public function getReportFields(): array
+    public function getReportFields()
     {
         return [
             'name' => basename($this->getFileName(), 'Cept.php'),
@@ -80,12 +69,15 @@ class Cept extends Test implements Interfaces\Plain, Interfaces\ScenarioDriven, 
         ];
     }
 
-    protected function getParser(): Parser
+    /**
+     * @return Parser
+     */
+    protected function getParser()
     {
         return $this->parser;
     }
 
-    public function fetchDependencies(): array
+    public function fetchDependencies()
     {
         return $this->getMetadata()->getDependencies();
     }

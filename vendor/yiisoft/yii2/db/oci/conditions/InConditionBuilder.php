@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\db\oci\conditions;
@@ -39,7 +39,7 @@ class InConditionBuilder extends \yii\db\conditions\InConditionBuilder
      *
      * @param ExpressionInterface|InCondition $condition the expression to be built.
      * @param array $params the binding parameters.
-     * @return string|null null when split is not required. Otherwise - built SQL condition.
+     * @return null|string null when split is not required. Otherwise - built SQL condition.
      */
     protected function splitCondition(InCondition $condition, &$params)
     {

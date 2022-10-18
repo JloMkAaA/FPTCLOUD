@@ -1,27 +1,17 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Test;
 
 use Codeception\Exception\InjectionException;
 use Codeception\Util\Annotation;
 
-use function array_merge;
-use function array_merge_recursive;
-use function array_unique;
-
 class Metadata
 {
-    protected ?string $name = null;
+    protected $name;
+    protected $filename;
+    protected $feature;
+    protected $index;
 
-    protected ?string $filename = null;
-
-    protected string $feature = '';
-
-    protected null|int|string $index = null;
-
-    protected array $params = [
+    protected $params = [
         'env' => [],
         'group' => [],
         'depends' => [],
@@ -29,59 +19,71 @@ class Metadata
         'incomplete' => null
     ];
 
-    protected array $current = [];
+    protected $current = [];
+    protected $services = [];
+    protected $reports = [];
 
-    protected array $services = [];
-
-    protected array $reports = [];
     /**
-     * @var string[]
+     * @return mixed
      */
-    private array $beforeClassMethods = [];
-    /**
-     * @var string[]
-     */
-    private array $afterClassMethods = [];
-
-    public function getEnv(): array
+    public function getEnv()
     {
         return $this->params['env'];
     }
 
-    public function getGroups(): array
+    /**
+     * @return array
+     */
+    public function getGroups()
     {
         return array_unique($this->params['group']);
     }
 
     /**
-     * @param string[] $groups
+     * @param mixed $groups
      */
-    public function setGroups(array $groups): void
+    public function setGroups($groups)
     {
         $this->params['group'] = array_merge($this->params['group'], $groups);
     }
 
-    public function getSkip(): ?string
+    /**
+     * @return mixed
+     */
+    public function getSkip()
     {
         return $this->params['skip'];
     }
 
-    public function setSkip(string $skip): void
+    /**
+     * @param mixed $skip
+     */
+    public function setSkip($skip)
     {
         $this->params['skip'] = $skip;
     }
 
-    public function getIncomplete(): ?string
+    /**
+     * @return mixed
+     */
+    public function getIncomplete()
     {
         return $this->params['incomplete'];
     }
 
-    public function setIncomplete(string $incomplete): void
+    /**
+     * @param mixed $incomplete
+     */
+    public function setIncomplete($incomplete)
     {
         $this->params['incomplete'] = $incomplete;
     }
 
-    public function getCurrent(?string $key = null): mixed
+    /**
+     * @param string|null $key
+     * @return mixed
+     */
+    public function getCurrent($key = null)
     {
         if ($key) {
             if (isset($this->current[$key])) {
@@ -96,92 +98,135 @@ class Metadata
         return $this->current;
     }
 
-    public function setCurrent(array $currents): void
+    public function setCurrent(array $currents)
     {
         $this->current = array_merge($this->current, $currents);
     }
 
-    public function getName(): string
+    /**
+     * @return mixed
+     */
+    public function getName()
     {
         return $this->name;
     }
 
-    public function setName(string $name): void
+    /**
+     * @param mixed $name
+     */
+    public function setName($name)
     {
         $this->name = $name;
     }
 
-    public function getFilename(): string
+    /**
+     * @return mixed
+     */
+    public function getFilename()
     {
         return $this->filename;
     }
 
-    public function setIndex(int|string $index): void
+    /**
+     * @param mixed $index
+     */
+    public function setIndex($index)
     {
         $this->index = $index;
     }
 
-    public function getIndex(): null|int|string
+    /**
+     * @return mixed
+     */
+    public function getIndex()
     {
         return $this->index;
     }
 
-    public function setFilename(string $filename): void
+    /**
+     * @param mixed $filename
+     */
+    public function setFilename($filename)
     {
         $this->filename = $filename;
     }
 
-    public function getDependencies(): array
+    /**
+     * @return array
+     */
+    public function getDependencies()
     {
         return $this->params['depends'];
     }
 
-    public function isBlocked(): bool
+    public function isBlocked()
     {
         return $this->getSkip() !== null || $this->getIncomplete() !== null;
     }
 
-    public function getFeature(): string
+    /**
+     * @return mixed
+     */
+    public function getFeature()
     {
         return $this->feature;
     }
 
-    public function setFeature(string $feature): void
+    /**
+     * @param mixed $feature
+     */
+    public function setFeature($feature)
     {
         $this->feature = $feature;
     }
 
-    public function getService(string $service): object
+    /**
+     * @param $service
+     * @return array
+     * @throws InjectionException
+     */
+    public function getService($service)
     {
         if (!isset($this->services[$service])) {
-            throw new InjectionException("Service {$service} is not defined and can't be accessed from a test");
+            throw new InjectionException("Service $service is not defined and can't be accessed from a test");
         }
         return $this->services[$service];
     }
 
-    public function setServices(array $services): void
+    /**
+     * @param array $services
+     */
+    public function setServices($services)
     {
         $this->services = $services;
     }
 
     /**
      * Returns all test reports
+     * @return array
      */
-    public function getReports(): array
+    public function getReports()
     {
         return $this->reports;
     }
 
-    public function addReport(string $type, $report): void
+    /**
+     * @param $type
+     * @param $report
+     */
+    public function addReport($type, $report)
     {
         $this->reports[$type] = $report;
     }
 
     /**
-     * Returns test params like: env, group, skip, incomplete, etc.
+     * Returns test params like: env, group, skip, incomplete, etc
      * Can return by annotation or return all if no key passed
+     *
+     * @param null $key
+     * @return array|mixed|null
      */
-    public function getParam(string $key = null): mixed
+    public function getParam($key = null)
     {
         if ($key) {
             if (isset($this->params[$key])) {
@@ -193,85 +238,25 @@ class Metadata
         return $this->params;
     }
 
-    public function setParamsFromAnnotations($annotations): void
+    /**
+     * @param mixed $annotations
+     */
+    public function setParamsFromAnnotations($annotations)
     {
-        $params = Annotation::fetchAllAnnotationsFromDocblock((string)$annotations);
+        $params = Annotation::fetchAllAnnotationsFromDocblock($annotations);
         $this->params = array_merge_recursive($this->params, $params);
 
         // set singular value for some params
         foreach (['skip', 'incomplete'] as $single) {
-            $this->params[$single] = empty($this->params[$single]) ? null : (string)$this->params[$single][0];
+            $this->params[$single] = empty($this->params[$single]) ? null : (string) $this->params[$single][0];
         }
     }
 
-    public function setParamsFromAttributes($attributes): void
-    {
-        $params = [];
-        foreach ($attributes as $attribute) {
-            $name = lcfirst(str_replace('Codeception\\Attribute\\', '', $attribute->getName()));
-            if ($attribute->isRepeated()) {
-                $params[$name] ??= [];
-                $params[$name][] = $attribute->getArguments();
-                continue;
-            }
-            $params[$name] = $attribute->getArguments();
-        }
-        $this->params = array_merge_recursive($this->params, $params);
-
-        // flatten arrays for some attributes
-        foreach (['group', 'env', 'before', 'after', 'prepare'] as $single) {
-            if (!isset($this->params[$single])) {
-                continue;
-            };
-            if (!is_array($this->params[$single])) {
-                continue;
-            };
-
-            $this->params[$single] = array_map(fn($a) => is_array($a) ? $a : [$a], $this->params[$single]);
-            $this->params[$single] = array_merge(...$this->params[$single]);
-        }
-
-
-        // set singular value for some params
-        foreach (['skip', 'incomplete'] as $single) {
-            $this->params[$single] = empty($this->params[$single]) ? null : (string)$this->params[$single][0];
-        }
-    }
-
-    public function setParams(array $params): void
+    /**
+     * @param $params
+     */
+    public function setParams($params)
     {
         $this->params = array_merge_recursive($this->params, $params);
-    }
-
-    /**
-     * @param string[] $beforeClassMethods
-     */
-    public function setBeforeClassMethods(array $beforeClassMethods): void
-    {
-        $this->beforeClassMethods = $beforeClassMethods;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getBeforeClassMethods(): array
-    {
-        return $this->beforeClassMethods;
-    }
-
-    /**
-     * @param string[] $afterClassMethods
-     */
-    public function setAfterClassMethods(array $afterClassMethods): void
-    {
-        $this->afterClassMethods = $afterClassMethods;
-    }
-
-    /**
-     * @return string[]
-     */
-    public function getAfterClassMethods(): array
-    {
-        return $this->afterClassMethods;
     }
 }

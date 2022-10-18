@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Test\Feature;
 
 use Codeception\Lib\Parser;
@@ -10,26 +7,35 @@ use Codeception\Test\Metadata;
 
 trait ScenarioLoader
 {
-    private Scenario $scenario;
+    /**
+     * @var Scenario
+     */
+    private $scenario;
 
-    abstract public function getMetadata(): Metadata;
+    /**
+     * @return Metadata
+     */
+    abstract public function getMetadata();
 
-    protected function createScenario(): void
+    protected function createScenario()
     {
         $this->scenario = new Scenario($this);
     }
 
-    public function getScenario(): Scenario
+    /**
+     * @return Scenario
+     */
+    public function getScenario()
     {
         return $this->scenario;
     }
 
-    public function getFeature(): string
+    public function getFeature()
     {
         return $this->getScenario()->getFeature();
     }
 
-    public function getScenarioText(string $format = 'text'): string
+    public function getScenarioText($format = 'text')
     {
         $code = $this->getSourceCode();
         $this->getParser()->parseFeature($code);
@@ -40,7 +46,9 @@ trait ScenarioLoader
         return $this->getScenario()->getText();
     }
 
-    abstract protected function getParser(): Parser;
-
-    abstract public function getSourceCode(): string;
+    /**
+     * @return Parser
+     */
+    abstract protected function getParser();
+    abstract public function getSourceCode();
 }

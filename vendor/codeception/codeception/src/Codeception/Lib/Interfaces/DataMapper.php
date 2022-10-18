@@ -1,14 +1,13 @@
 <?php
-
 namespace Codeception\Lib\Interfaces;
 
 interface DataMapper extends ORM, DoctrineProvider
 {
-    public function haveInRepository(string $entity, array $data);
+    public function haveInRepository($entity, array $data);
 
-    public function seeInRepository(string $entity, array $params = []): void;
+    public function seeInRepository($entity, $params = []);
 
-    public function dontSeeInRepository(string $entity, array $params = []): void;
+    public function dontSeeInRepository($entity, $params = []);
 
-    public function grabFromRepository(string $entity, string $field, array $params = []);
+    public function grabFromRepository($entity, $field, $params = []);
 }

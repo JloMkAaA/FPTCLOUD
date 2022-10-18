@@ -21,7 +21,7 @@ class Image extends AbstractUriElement
         parent::__construct($node, $currentUri, 'GET');
     }
 
-    protected function getRawUri(): string
+    protected function getRawUri()
     {
         return $this->node->getAttribute('src');
     }

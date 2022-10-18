@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\log;
@@ -69,7 +69,7 @@ class Dispatcher extends Component
     public $targets = [];
 
     /**
-     * @var Logger|null the logger.
+     * @var Logger the logger.
      */
     private $_logger;
 
@@ -210,7 +210,7 @@ class Dispatcher extends Component
      * Generate target error message
      *
      * @param Target $target log target object
-     * @param \Throwable $throwable catched exception
+     * @param \Throwable|\Exception $throwable catched exception
      * @param string $method full method path
      * @return array generated error message data
      * @since 2.0.32

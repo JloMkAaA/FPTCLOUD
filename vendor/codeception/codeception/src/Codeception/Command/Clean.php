@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Configuration;
@@ -18,14 +15,14 @@ use Symfony\Component\Console\Output\OutputInterface;
  */
 class Clean extends Command
 {
-    use Shared\ConfigTrait;
+    use Shared\Config;
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Recursively cleans log and generated code';
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
         $projectDir = Configuration::projectDir();
         $this->cleanProjectsRecursively($output, $projectDir);
@@ -33,10 +30,11 @@ class Clean extends Command
         return 0;
     }
 
-    private function cleanProjectsRecursively(OutputInterface $output, string $projectDir): void
+    private function cleanProjectsRecursively(OutputInterface $output, $projectDir)
     {
         $config = Configuration::config($projectDir);
-        $logDir = Configuration::outputDir();
+        
+        $logDir = Configuration::logDir();
         $output->writeln("<info>Cleaning up output " . $logDir . "...</info>");
         FileSystem::doEmptyDir($logDir);
 

@@ -5,7 +5,7 @@ use yii\mail\BaseMailer;
 
 class TestMailer extends BaseMailer
 {
-    public $messageClass = \yii\symfonymailer\Message::class;
+    public $messageClass = \yii\swiftmailer\Message::class;
 
     /**
      * @var \Closure

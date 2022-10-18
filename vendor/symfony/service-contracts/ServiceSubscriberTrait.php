@@ -30,7 +30,13 @@ trait ServiceSubscriberTrait
      */
     public static function getSubscribedServices(): array
     {
-        $services = method_exists(get_parent_class(self::class) ?: '', __FUNCTION__) ? parent::getSubscribedServices() : [];
+        static $services;
+
+        if (null !== $services) {
+            return $services;
+        }
+
+        $services = \is_callable(['parent', __FUNCTION__]) ? parent::getSubscribedServices() : [];
 
         foreach ((new \ReflectionClass(self::class))->getMethods() as $method) {
             if (self::class !== $method->getDeclaringClass()->name) {
@@ -68,7 +74,7 @@ trait ServiceSubscriberTrait
     {
         $this->container = $container;
 
-        if (method_exists(get_parent_class(self::class) ?: '', __FUNCTION__)) {
+        if (\is_callable(['parent', __FUNCTION__])) {
             return parent::setContainer($container);
         }
 

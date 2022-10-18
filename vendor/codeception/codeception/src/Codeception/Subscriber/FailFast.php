@@ -1,38 +1,21 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Subscriber;
 
-use Codeception\Event\TestEvent;
+use Codeception\Event\SuiteEvent;
 use Codeception\Events;
-use Codeception\ResultAggregator;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class FailFast implements EventSubscriberInterface
 {
-    use Shared\StaticEventsTrait;
+    use Shared\StaticEvents;
 
-    /**
-     * @var array<string, string>
-     */
-    protected static array $events = [
-        Events::TEST_FAIL => 'stopOnFail',
-        Events::TEST_ERROR => 'stopOnFail',
+    public static $events = [
+        Events::SUITE_BEFORE => 'stopOnFail',
     ];
 
-    private int $failureCount = 0;
-
-    public function __construct(private int $stopFailureCount, private ResultAggregator $resultAggregator)
+    public function stopOnFail(SuiteEvent $e)
     {
-    }
-
-    public function stopOnFail(TestEvent $e): void
-    {
-        $this->failureCount++;
-
-        if ($this->failureCount >= $this->stopFailureCount) {
-            $this->resultAggregator->stop();
-        }
+        $e->getResult()->stopOnError(true);
+        $e->getResult()->stopOnFailure(true);
     }
 }

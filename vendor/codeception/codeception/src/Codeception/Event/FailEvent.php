@@ -1,20 +1,31 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Event;
-
-use Codeception\Test\Test;
-use Throwable;
 
 class FailEvent extends TestEvent
 {
-    public function __construct(Test $test, private Throwable $fail, ?float $time)
+    /**
+     * @var \Exception
+     */
+    protected $fail;
+
+    /**
+     * @var int
+     */
+    protected $count;
+
+    public function __construct(\PHPUnit\Framework\Test $test, $time, $e, $count = 0)
     {
         parent::__construct($test, $time);
+        $this->fail = $e;
+        $this->count = $count;
     }
 
-    public function getFail(): Throwable
+    public function getCount()
+    {
+        return $this->count;
+    }
+
+    public function getFail()
     {
         return $this->fail;
     }

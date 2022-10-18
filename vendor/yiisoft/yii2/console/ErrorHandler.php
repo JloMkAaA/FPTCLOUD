@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\console;
@@ -25,7 +25,7 @@ class ErrorHandler extends \yii\base\ErrorHandler
 {
     /**
      * Renders an exception using ansi format for console output.
-     * @param \Throwable $exception the exception to be rendered.
+     * @param \Exception $exception the exception to be rendered.
      */
     protected function renderException($exception)
     {

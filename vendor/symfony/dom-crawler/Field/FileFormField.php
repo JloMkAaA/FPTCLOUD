@@ -25,7 +25,7 @@ class FileFormField extends FormField
      *
      * @throws \InvalidArgumentException When error code doesn't exist
      */
-    public function setErrorCode(int $error)
+    public function setErrorCode($error)
     {
         $codes = [\UPLOAD_ERR_INI_SIZE, \UPLOAD_ERR_FORM_SIZE, \UPLOAD_ERR_PARTIAL, \UPLOAD_ERR_NO_FILE, \UPLOAD_ERR_NO_TMP_DIR, \UPLOAD_ERR_CANT_WRITE, \UPLOAD_ERR_EXTENSION];
         if (!\in_array($error, $codes)) {
@@ -37,16 +37,20 @@ class FileFormField extends FormField
 
     /**
      * Sets the value of the field.
+     *
+     * @param string $value The value of the field
      */
-    public function upload(?string $value)
+    public function upload($value)
     {
         $this->setValue($value);
     }
 
     /**
      * Sets the value of the field.
+     *
+     * @param string|null $value The value of the field
      */
-    public function setValue(?string $value)
+    public function setValue($value)
     {
         if (null !== $value && is_readable($value)) {
             $error = \UPLOAD_ERR_OK;
@@ -76,8 +80,10 @@ class FileFormField extends FormField
 
     /**
      * Sets path to the file as string for simulating HTTP request.
+     *
+     * @param string $path The path to the file
      */
-    public function setFilePath(string $path)
+    public function setFilePath($path)
     {
         parent::setValue($path);
     }

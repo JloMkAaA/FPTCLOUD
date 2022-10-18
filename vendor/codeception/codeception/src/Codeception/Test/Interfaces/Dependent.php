@@ -1,8 +1,7 @@
 <?php
-
 namespace Codeception\Test\Interfaces;
 
 interface Dependent
 {
-    public function fetchDependencies(): array;
+    public function fetchDependencies();
 }

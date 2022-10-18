@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Configuration;
@@ -10,8 +7,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function ucfirst;
 
 /**
  * Generates PageObject. Can be generated either globally, or just for one suite.
@@ -23,10 +18,10 @@ use function ucfirst;
  */
 class GeneratePageObject extends Command
 {
-    use Shared\FileSystemTrait;
-    use Shared\ConfigTrait;
+    use Shared\FileSystem;
+    use Shared\Config;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition([
             new InputArgument('suite', InputArgument::REQUIRED, 'Either suite name or page object name)'),
@@ -35,14 +30,14 @@ class GeneratePageObject extends Command
         parent::configure();
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Generates empty PageObject class';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
-        $suite = (string)$input->getArgument('suite');
+        $suite = $input->getArgument('suite');
         $class = $input->getArgument('page');
 
         if (!$class) {
@@ -64,14 +59,18 @@ class GeneratePageObject extends Command
 
         $output->writeln($filename);
 
-        $pageObject = new PageObjectGenerator($conf, ucfirst($suite) . '\\' . $class);
-        $res = $this->createFile($filename, $pageObject->produce());
+        $gen = new PageObjectGenerator($conf, ucfirst($suite) . '\\' . $class);
+        $res = $this->createFile($filename, $gen->produce());
 
         if (!$res) {
-            $output->writeln("<error>PageObject {$filename} already exists</error>");
+            $output->writeln("<error>PageObject $filename already exists</error>");
             return 1;
         }
-        $output->writeln("<info>PageObject was created in {$filename}</info>");
+        $output->writeln("<info>PageObject was created in $filename</info>");
         return 0;
+    }
+
+    protected function pathToPageObject($class, $suite)
+    {
     }
 }

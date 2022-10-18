@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\db;
@@ -43,7 +43,7 @@ class BatchQueryResult extends Component implements \Iterator
     const EVENT_FINISH = 'finish';
 
     /**
-     * @var Connection|null the DB connection to be used when performing batch query.
+     * @var Connection the DB connection to be used when performing batch query.
      * If null, the "db" application component will be used.
      */
     public $db;

@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Subscriber;
 
 use Codeception\Configuration;
@@ -10,36 +7,23 @@ use Codeception\Events;
 use Codeception\Lib\Generator\Actions;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use function codecept_debug;
-use function fclose;
-use function fgets;
-use function file_exists;
-use function file_put_contents;
-use function fopen;
-use function is_writable;
-use function mkdir;
-use function preg_match;
-
 class AutoRebuild implements EventSubscriberInterface
 {
-    use Shared\StaticEventsTrait;
+    use Shared\StaticEvents;
 
-    /**
-     * @var array<string, string>
-     */
-    protected static array $events = [
+    public static $events = [
         Events::SUITE_INIT => 'updateActor'
     ];
 
-    public function updateActor(SuiteEvent $event): void
+    public function updateActor(SuiteEvent $e)
     {
-        $settings = $event->getSettings();
+        $settings = $e->getSettings();
         if (!$settings['actor']) {
             codecept_debug('actor is empty');
             return; // no actor
         }
 
-        $modules = $event->getSuite()->getModules();
+        $modules = $e->getSuite()->getModules();
 
         $actorActionsFile = Configuration::supportDir() . '_generated' . DIRECTORY_SEPARATOR
             . $settings['actor'] . 'Actions.php';
@@ -49,12 +33,12 @@ class AutoRebuild implements EventSubscriberInterface
             $this->generateActorActions($actorActionsFile, $settings);
             return;
         }
-
+        
         // load actor class to see hash
         $handle = @fopen($actorActionsFile, "r");
-        if ($handle && is_writable($actorActionsFile)) {
+        if ($handle and is_writable($actorActionsFile)) {
             $line = @fgets($handle);
-            if (preg_match('#\[STAMP] ([a-f0-9]*)#', $line, $matches)) {
+            if (preg_match('~\[STAMP\] ([a-f0-9]*)~', $line, $matches)) {
                 $hash = $matches[1];
                 $currentHash = Actions::genHash($modules, $settings);
 
@@ -70,7 +54,7 @@ class AutoRebuild implements EventSubscriberInterface
         }
     }
 
-    protected function generateActorActions(string $actorActionsFile, array $settings): void
+    protected function generateActorActions($actorActionsFile, $settings)
     {
         if (!file_exists(Configuration::supportDir() . '_generated')) {
             @mkdir(Configuration::supportDir() . '_generated');

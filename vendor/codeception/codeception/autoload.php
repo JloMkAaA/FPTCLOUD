@@ -1,7 +1,7 @@
 <?php
 
 $autoloadFile = './vendor/codeception/codeception/autoload.php';
-if ((!isset($argv) || (isset($argv) && !in_array('--no-redirect', $argv))) && file_exists('./vendor/autoload.php') && file_exists($autoloadFile) && __FILE__ != realpath($autoloadFile)) {
+if (( !isset($argv) || (isset($argv) && !in_array('--no-redirect', $argv)) ) && file_exists('./vendor/autoload.php') && file_exists($autoloadFile) && __FILE__ != realpath($autoloadFile)) {
     //for global installation or phar file
     fwrite(
         STDERR,
@@ -33,3 +33,17 @@ if (isset($argv)) {
 if (isset($_SERVER['argv'])) {
     $_SERVER['argv'] = array_values(array_diff($_SERVER['argv'], ['--no-redirect']));
 }
+
+// @codingStandardsIgnoreStart
+
+include_once __DIR__ . DIRECTORY_SEPARATOR . 'shim.php';
+// compat
+if (PHP_MAJOR_VERSION < 7) {
+    if (false === interface_exists('Throwable', false)) {
+        interface Throwable {};
+    }
+    if (false === class_exists('ParseError', false)) {
+        class ParseError extends \Exception {};
+    }
+}
+// @codingStandardsIgnoreEnd

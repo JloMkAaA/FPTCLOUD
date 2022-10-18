@@ -1,22 +1,24 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib;
 
 use Codeception\Actor;
 use Codeception\Exception\TestRuntimeException;
-use Codeception\Lib\Interfaces\MultiSession;
 
 class Friend
 {
-    protected array $data = [];
+    protected $name;
+    protected $actor;
+    protected $data = [];
+    protected $multiSessionModules = [];
 
-    protected array $multiSessionModules = [];
-
-    public function __construct(protected string $name, protected Actor $actor, array $modules = [])
+    public function __construct($name, Actor $actor, $modules = [])
     {
-        $this->multiSessionModules = array_filter($modules, fn ($m): bool => $m instanceof MultiSession);
+        $this->name = $name;
+        $this->actor = $actor;
+
+        $this->multiSessionModules = array_filter($modules, function ($m) {
+            return $m instanceof Interfaces\MultiSession;
+        });
 
         if (empty($this->multiSessionModules)) {
             throw new TestRuntimeException("No multisession modules used. Can't instantiate friend");
@@ -36,7 +38,7 @@ class Friend
                 continue;
             }
             $module->_loadSession($this->data[$name]);
-        }
+        };
 
         $this->actor->comment(strtoupper("{$this->name} does ---"));
         $ret = $closure($this->actor);
@@ -46,26 +48,26 @@ class Friend
             $name = $module->_getName();
             $this->data[$name] = $module->_backupSession();
             $module->_loadSession($currentUserData[$name]);
-        }
+        };
         return $ret;
     }
 
-    public function isGoingTo(string $argumentation): void
+    public function isGoingTo($argumentation)
     {
         $this->actor->amGoingTo($argumentation);
     }
 
-    public function expects(string $prediction): void
+    public function expects($prediction)
     {
         $this->actor->expect($prediction);
     }
 
-    public function expectsTo(string $prediction): void
+    public function expectsTo($prediction)
     {
         $this->actor->expectTo($prediction);
     }
 
-    public function leave(): void
+    public function leave()
     {
         foreach ($this->multiSessionModules as $module) {
             if (isset($this->data[$module->_getName()])) {

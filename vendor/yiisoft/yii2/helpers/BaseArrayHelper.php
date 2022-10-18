@@ -1,15 +1,15 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\helpers;
 
-use Yii;
 use ArrayAccess;
 use Traversable;
+use Yii;
 use yii\base\Arrayable;
 use yii\base\InvalidArgumentException;
 
@@ -351,7 +351,7 @@ class BaseArrayHelper
      * ```
      *
      * @param array $array the array where to look the value from
-     * @param mixed $value the value to remove from the array
+     * @param string $value the value to remove from the array
      * @return array the items that were removed from the array
      * @since 2.0.11
      */
@@ -585,7 +585,7 @@ class BaseArrayHelper
      * @param array $array
      * @param string|\Closure $from
      * @param string|\Closure $to
-     * @param string|\Closure|null $group
+     * @param string|\Closure $group
      * @return array
      */
     public static function map($array, $from, $to, $group = null)
@@ -697,7 +697,7 @@ class BaseArrayHelper
      * @param array $data data to be encoded
      * @param bool $valuesOnly whether to encode array values only. If false,
      * both the array keys and array values will be encoded.
-     * @param string|null $charset the charset that the data is using. If not set,
+     * @param string $charset the charset that the data is using. If not set,
      * [[\yii\base\Application::charset]] will be used.
      * @return array the encoded data
      * @see https://www.php.net/manual/en/function.htmlspecialchars.php
@@ -726,14 +726,12 @@ class BaseArrayHelper
 
     /**
      * Decodes HTML entities into the corresponding characters in an array of strings.
-     *
      * Only array values will be decoded by default.
      * If a value is an array, this method will also decode it recursively.
      * Only string values will be decoded.
-     *
      * @param array $data data to be decoded
-     * @param bool $valuesOnly whether to decode array values only. If `false`,
-     * then both the array keys and array values will be decoded.
+     * @param bool $valuesOnly whether to decode array values only. If false,
+     * both the array keys and array values will be decoded.
      * @return array the decoded data
      * @see https://www.php.net/manual/en/function.htmlspecialchars-decode.php
      */
@@ -742,12 +740,12 @@ class BaseArrayHelper
         $d = [];
         foreach ($data as $key => $value) {
             if (!$valuesOnly && is_string($key)) {
-                $key = htmlspecialchars_decode($key, ENT_QUOTES | ENT_SUBSTITUTE);
+                $key = htmlspecialchars_decode($key, ENT_QUOTES);
             }
             if (is_string($value)) {
-                $d[$key] = htmlspecialchars_decode($value, ENT_QUOTES | ENT_SUBSTITUTE);
+                $d[$key] = htmlspecialchars_decode($value, ENT_QUOTES);
             } elseif (is_array($value)) {
-                $d[$key] = static::htmlDecode($value, $valuesOnly);
+                $d[$key] = static::htmlDecode($value);
             } else {
                 $d[$key] = $value;
             }
@@ -771,7 +769,7 @@ class BaseArrayHelper
      */
     public static function isAssociative($array, $allStrings = true)
     {
-        if (empty($array) || !is_array($array)) {
+        if (!is_array($array) || empty($array)) {
             return false;
         }
 
@@ -817,13 +815,11 @@ class BaseArrayHelper
             return true;
         }
 
-        $keys = array_keys($array);
-
         if ($consecutive) {
-            return $keys === array_keys($keys);
+            return array_keys($array) === range(0, count($array) - 1);
         }
 
-        foreach ($keys as $key) {
+        foreach ($array as $key => $value) {
             if (!is_int($key)) {
                 return false;
             }
@@ -837,9 +833,8 @@ class BaseArrayHelper
      *
      * This method does the same as the PHP function [in_array()](https://www.php.net/manual/en/function.in-array.php)
      * but additionally works for objects that implement the [[Traversable]] interface.
-     *
      * @param mixed $needle The value to look for.
-     * @param iterable $haystack The set of values to search.
+     * @param array|Traversable $haystack The set of values to search.
      * @param bool $strict Whether to enable strict (`===`) comparison.
      * @return bool `true` if `$needle` was found in `$haystack`, `false` otherwise.
      * @throws InvalidArgumentException if `$haystack` is neither traversable nor an array.
@@ -848,18 +843,16 @@ class BaseArrayHelper
      */
     public static function isIn($needle, $haystack, $strict = false)
     {
-        if (!static::isTraversable($haystack)) {
-            throw new InvalidArgumentException('Argument $haystack must be an array or implement Traversable');
-        }
-
-        if (is_array($haystack)) {
-            return in_array($needle, $haystack, $strict);
-        }
-
-        foreach ($haystack as $value) {
-            if ($strict ? $needle === $value : $needle == $value) {
-                return true;
+        if ($haystack instanceof Traversable) {
+            foreach ($haystack as $value) {
+                if ($needle == $value && (!$strict || $needle === $value)) {
+                    return true;
+                }
             }
+        } elseif (is_array($haystack)) {
+            return in_array($needle, $haystack, $strict);
+        } else {
+            throw new InvalidArgumentException('Argument $haystack must be an array or implement Traversable');
         }
 
         return false;
@@ -885,27 +878,26 @@ class BaseArrayHelper
      *
      * This method will return `true`, if all elements of `$needles` are contained in
      * `$haystack`. If at least one element is missing, `false` will be returned.
-     *
-     * @param iterable $needles The values that must **all** be in `$haystack`.
-     * @param iterable $haystack The set of value to search.
+     * @param array|Traversable $needles The values that must **all** be in `$haystack`.
+     * @param array|Traversable $haystack The set of value to search.
      * @param bool $strict Whether to enable strict (`===`) comparison.
-     * @return bool `true` if `$needles` is a subset of `$haystack`, `false` otherwise.
      * @throws InvalidArgumentException if `$haystack` or `$needles` is neither traversable nor an array.
+     * @return bool `true` if `$needles` is a subset of `$haystack`, `false` otherwise.
      * @since 2.0.7
      */
     public static function isSubset($needles, $haystack, $strict = false)
     {
-        if (!static::isTraversable($needles)) {
-            throw new InvalidArgumentException('Argument $needles must be an array or implement Traversable');
-        }
-
-        foreach ($needles as $needle) {
-            if (!static::isIn($needle, $haystack, $strict)) {
-                return false;
+        if (is_array($needles) || $needles instanceof Traversable) {
+            foreach ($needles as $needle) {
+                if (!static::isIn($needle, $haystack, $strict)) {
+                    return false;
+                }
             }
+
+            return true;
         }
 
-        return true;
+        throw new InvalidArgumentException('Argument $needles must be an array or implement Traversable');
     }
 
     /**
@@ -944,7 +936,7 @@ class BaseArrayHelper
      * ```
      *
      * @param array $array Source array
-     * @param iterable $filters Rules that define array keys which should be left or removed from results.
+     * @param array $filters Rules that define array keys which should be left or removed from results.
      * Each rule is:
      * - `var` - `$array['var']` will be left in result.
      * - `var.key` = only `$array['var']['key'] will be left in result.
@@ -1006,30 +998,5 @@ class BaseArrayHelper
         }
 
         return $result;
-    }
-
-    /**
-     * Sorts array recursively.
-     *
-     * @param array $array An array passing by reference.
-     * @param callable|null $sorter The array sorter. If omitted, sort index array by values, sort assoc array by keys.
-     * @return array
-     */
-    public static function recursiveSort(array &$array, $sorter = null)
-    {
-        foreach ($array as &$value) {
-            if (is_array($value)) {
-                static::recursiveSort($value, $sorter);
-            }
-        }
-        unset($value);
-
-        if ($sorter === null) {
-            $sorter = static::isIndexed($array) ? 'sort' : 'ksort';
-        }
-
-        call_user_func_array($sorter, [&$array]);
-
-        return $array;
     }
 }

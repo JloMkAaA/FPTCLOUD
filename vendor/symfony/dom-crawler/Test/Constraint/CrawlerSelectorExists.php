@@ -16,7 +16,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class CrawlerSelectorExists extends Constraint
 {
-    private string $selector;
+    private $selector;
 
     public function __construct(string $selector)
     {

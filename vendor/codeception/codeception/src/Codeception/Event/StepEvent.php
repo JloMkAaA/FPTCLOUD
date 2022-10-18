@@ -1,25 +1,37 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Event;
 
 use Codeception\Step;
 use Codeception\TestInterface;
-use Symfony\Contracts\EventDispatcher\Event;
+use Symfony\Component\EventDispatcher\Event;
 
 class StepEvent extends Event
 {
-    public function __construct(protected TestInterface $test, protected Step $step)
+    /**
+     * @var Step
+     */
+    protected $step;
+
+    /**
+     * @var TestInterface
+     */
+    protected $test;
+
+    public function __construct(TestInterface $test, Step $step)
     {
+        $this->test = $test;
+        $this->step = $step;
     }
 
-    public function getStep(): Step
+    public function getStep()
     {
         return $this->step;
     }
 
-    public function getTest(): TestInterface
+    /**
+     * @return TestInterface
+     */
+    public function getTest()
     {
         return $this->test;
     }

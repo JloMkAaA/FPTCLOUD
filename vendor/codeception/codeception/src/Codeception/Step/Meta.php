@@ -1,40 +1,32 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Step;
 
 use Codeception\Lib\ModuleContainer;
 use Codeception\Step as CodeceptionStep;
 
-use function array_pop;
-use function end;
-use function is_string;
-use function str_replace;
-
 class Meta extends CodeceptionStep
 {
-    public function run(ModuleContainer $container = null): void
+    public function run(ModuleContainer $container = null)
     {
     }
 
-    public function setTraceInfo(string $file, int $line): void
+    public function setTraceInfo($file, $line)
     {
         $this->file = $file;
         $this->line = $line;
     }
 
-    public function setPrefix(string $actor): void
+    public function setPrefix($actor)
     {
         $this->prefix = $actor;
     }
 
-    public function getArgumentsAsString(int $maxLength = self::DEFAULT_MAX_LENGTH): string
+    public function getArgumentsAsString($maxLength = 200)
     {
         $argumentBackup = $this->arguments;
         $lastArgAsString = '';
         $lastArg = end($this->arguments);
-        if (is_string($lastArg) && str_contains($lastArg, "\n")) {
+        if (is_string($lastArg) && strpos($lastArg, "\n")  !== false) {
             $lastArgAsString = "\r\n   " . str_replace("\n", "\n   ", $lastArg);
             array_pop($this->arguments);
         }
@@ -43,7 +35,7 @@ class Meta extends CodeceptionStep
         return $result;
     }
 
-    public function setFailed(bool $failed): void
+    public function setFailed($failed)
     {
         $this->failed = $failed;
     }

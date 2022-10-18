@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Configuration;
@@ -10,8 +7,6 @@ use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function ucfirst;
 
 /**
  * Creates empty Helper class.
@@ -22,35 +17,35 @@ use function ucfirst;
  */
 class GenerateHelper extends Command
 {
-    use Shared\FileSystemTrait;
-    use Shared\ConfigTrait;
+    use Shared\FileSystem;
+    use Shared\Config;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition([
             new InputArgument('name', InputArgument::REQUIRED, 'helper name'),
         ]);
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Generates new helper';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
-        $name = ucfirst((string)$input->getArgument('name'));
+        $name = ucfirst($input->getArgument('name'));
         $config = $this->getGlobalConfig();
 
         $path = $this->createDirectoryFor(Configuration::supportDir() . 'Helper', $name);
         $filename = $path . $this->getShortClassName($name) . '.php';
 
-        $res = $this->createFile($filename, (new Helper($config, $name))->produce());
+        $res = $this->createFile($filename, (new Helper($name, $config['namespace']))->produce());
         if ($res) {
-            $output->writeln("<info>Helper {$filename} created</info>");
+            $output->writeln("<info>Helper $filename created</info>");
             return 0;
         } else {
-            $output->writeln("<error>Error creating helper {$filename}</error>");
+            $output->writeln("<error>Error creating helper $filename</error>");
             return 1;
         }
     }

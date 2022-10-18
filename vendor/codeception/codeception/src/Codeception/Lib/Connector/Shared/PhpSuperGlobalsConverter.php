@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Connector\Shared;
 
 /**
@@ -17,8 +14,12 @@ trait PhpSuperGlobalsConverter
     /**
      * Rearrange files array to be compatible with PHP $_FILES superglobal structure
      * @see https://bugs.php.net/bug.php?id=25589
+     *
+     * @param array $requestFiles
+     *
+     * @return array
      */
-    protected function remapFiles(array $requestFiles): array
+    protected function remapFiles(array $requestFiles)
     {
         $files = $this->rearrangeFiles($requestFiles);
 
@@ -29,13 +30,17 @@ trait PhpSuperGlobalsConverter
      * Escape high-level variable name with dots, underscores and other "special" chars
      * to be compatible with PHP "bug"
      * @see https://bugs.php.net/bug.php?id=40000
+     *
+     * @param array $parameters
+     *
+     * @return array
      */
-    protected function remapRequestParameters(array $parameters): array
+    protected function remapRequestParameters(array $parameters)
     {
         return $this->replaceSpaces($parameters);
     }
 
-    private function rearrangeFiles(array $requestFiles): array
+    private function rearrangeFiles($requestFiles)
     {
         $files = [];
         foreach ($requestFiles as $name => $info) {
@@ -73,7 +78,9 @@ trait PhpSuperGlobalsConverter
                      * to ['tmp_name' => ['a' => '/tmp/test.txt'] ]
                      */
                     $innerInfo = array_map(
-                        fn ($v) => [$innerName => $v],
+                        function ($v) use ($innerName) {
+                            return [$innerName => $v];
+                        },
                         $innerInfo
                     );
 
@@ -97,10 +104,12 @@ trait PhpSuperGlobalsConverter
      * @see https://bugs.php.net/bug.php?id=40000
      *
      * @param array $parameters Array of request parameters to be converted
+     *
+     * @return array
      */
-    private function replaceSpaces(array $parameters): array
+    private function replaceSpaces($parameters)
     {
-        $qs = http_build_query($parameters);
+        $qs = http_build_query($parameters, '', '&');
         parse_str($qs, $output);
 
         return $output;

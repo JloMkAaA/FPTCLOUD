@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\web;
@@ -30,7 +30,7 @@ use yii\helpers\Url;
 class AssetBundle extends BaseObject
 {
     /**
-     * @var string|null the directory that contains the source asset files for this asset bundle.
+     * @var string the directory that contains the source asset files for this asset bundle.
      * A source asset file is a file that is part of your source code repository of your Web application.
      *
      * You must set this property if the directory containing the source asset files is not Web accessible.
@@ -79,7 +79,7 @@ class AssetBundle extends BaseObject
      * specified in one of the following formats:
      *
      * - an absolute URL representing an external asset. For example,
-     *   `https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js` or
+     *   `http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js` or
      *   `//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js`.
      * - a relative path representing a local asset (e.g. `js/main.js`). The actual file path of a local
      *   asset can be determined by prefixing [[basePath]] to the relative path, and the actual URL

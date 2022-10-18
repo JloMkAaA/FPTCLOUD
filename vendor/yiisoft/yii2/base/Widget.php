@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\base;
@@ -131,7 +131,7 @@ class Widget extends Component implements ViewContextInterface
      * The widget rendering result is returned by this method.
      * @param array $config name-value pairs that will be used to initialize the object properties
      * @return string the rendering result of the widget.
-     * @throws \Throwable
+     * @throws \Exception
      */
     public static function widget($config = [])
     {
@@ -147,12 +147,6 @@ class Widget extends Component implements ViewContextInterface
                 $out = $widget->afterRun($result);
             }
         } catch (\Exception $e) {
-            // close the output buffer opened above if it has not been closed already
-            if (ob_get_level() > 0) {
-                ob_end_clean();
-            }
-            throw $e;
-        } catch (\Throwable $e) {
             // close the output buffer opened above if it has not been closed already
             if (ob_get_level() > 0) {
                 ob_end_clean();
@@ -217,8 +211,7 @@ class Widget extends Component implements ViewContextInterface
 
     /**
      * Executes the widget.
-     *
-     * @return string|void the rendering result may be directly "echoed" or returned as a string
+     * @return string the result of widget execution to be outputted.
      */
     public function run()
     {

@@ -1,13 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Codeception;
 
 interface CustomCommandInterface
 {
+
     /**
      * returns the name of the command
+     *
+     * @return string
      */
-    public static function getCommandName(): string;
+    public static function getCommandName();
 }

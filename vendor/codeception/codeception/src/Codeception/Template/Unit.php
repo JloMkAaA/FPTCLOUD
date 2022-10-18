@@ -1,17 +1,14 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Codeception\Template;
 
 use Codeception\InitTemplate;
-use Codeception\Module\Asserts;
 use Codeception\Util\Template;
 use Symfony\Component\Yaml\Yaml;
 
 class Unit extends InitTemplate
 {
-    protected string $configTemplate = <<<EOF
+    protected $configTemplate = <<<EOF
 suites:
     unit:
         path: .
@@ -22,28 +19,28 @@ settings:
 paths:
     tests: {{dir}}
     output: {{dir}}/_output
-    support: {{dir}}/Support
+    support: {{dir}}/_support
     data: {{dir}}
      
 EOF;
 
-    protected string $testerAndModules = <<<EOF
+    protected $testerAndModules = <<<EOF
         actor: UnitTester
         modules:
             enabled:
                 # add more modules here
                 - Asserts
-        step_decorators: ~
-
+        step_decorators: ~ 
 EOF;
 
-    public function setup(): void
+
+    public function setup()
     {
         $this->sayInfo('This will install Codeception for unit testing only');
         $this->say();
         $dir = $this->ask("Where tests will be stored?", 'tests');
 
-        if ($this->namespace === '') {
+        if (!$this->namespace) {
             $this->namespace = $this->ask("Enter a default namespace for tests (or skip this step)");
         }
 
@@ -52,34 +49,32 @@ EOF;
         $this->say("Like accessing frameworks, ORM, Database.");
         $haveTester = $this->ask("Do you wish to enable them?", false);
 
-        $this->createDirectoryFor($outputDir = $dir . DIRECTORY_SEPARATOR . '_output');
-        $this->createDirectoryFor($supportDir = $dir . DIRECTORY_SEPARATOR . '_support');
-        $this->createDirectoryFor($supportDir . DIRECTORY_SEPARATOR . '_generated');
-        $this->gitIgnore($outputDir);
-        $this->gitIgnore($supportDir . DIRECTORY_SEPARATOR . '_generated');
+        $this->createEmptyDirectory($outputDir = $dir . DIRECTORY_SEPARATOR . '_output');
+        $this->createEmptyDirectory($supportDir = $dir . DIRECTORY_SEPARATOR . '_support');
 
         $configFile = (new Template($this->configTemplate))
             ->place('dir', $dir)
             ->place('tester', $haveTester ? $this->testerAndModules : '')
             ->produce();
 
-        $namespace = rtrim($this->namespace, '\\');
-        $configFile = "namespace: $namespace\nsupport_namespace: {$this->supportNamespace}\n" . $configFile;
+        if ($this->namespace) {
+            $namespace = rtrim($this->namespace, '\\');
+            $configFile = "namespace: $namespace\n" . $configFile;
+        }
 
         $this->createFile('codeception.yml', $configFile);
 
-        if (!class_exists(Asserts::class)) {
+        if (!class_exists('\\Codeception\\Module\\Asserts')) {
             $this->addModulesToComposer(['Asserts']);
         }
 
         if ($haveTester) {
-            $settings = Yaml::parse($configFile)['suites']['unit'];
-            $settings['support_namespace'] = $this->supportNamespace;
-            $this->createActor('UnitTester', $supportDir, $settings);
+            $this->createHelper('Unit', $supportDir);
+            $this->createActor('UnitTester', $supportDir, Yaml::parse($configFile)['suites']['unit']);
         }
 
         $this->gitIgnore($outputDir);
-        $this->sayInfo("Created test directory inside at {$dir}");
+        $this->sayInfo("Created test directory inside at $dir");
 
         $this->say();
         $this->saySuccess("INSTALLATION COMPLETE");

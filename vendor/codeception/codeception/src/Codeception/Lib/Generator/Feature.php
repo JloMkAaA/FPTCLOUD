@@ -1,14 +1,11 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib\Generator;
 
 use Codeception\Util\Template;
 
 class Feature
 {
-    protected string $template = <<<EOF
+    protected $template = <<<EOF
 Feature: {{name}}
   In order to ...
   As a ...
@@ -18,11 +15,14 @@ Feature: {{name}}
 
 EOF;
 
-    public function __construct(protected string $name)
+    protected $name;
+
+    public function __construct($name)
     {
+        $this->name = $name;
     }
 
-    public function produce(): string
+    public function produce()
     {
         return (new Template($this->template))
             ->place('name', $this->name)

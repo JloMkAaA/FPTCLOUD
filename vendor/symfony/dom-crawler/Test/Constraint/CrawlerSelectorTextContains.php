@@ -16,10 +16,10 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class CrawlerSelectorTextContains extends Constraint
 {
-    private string $selector;
-    private string $expectedText;
-    private bool $hasNode = false;
-    private string $nodeText;
+    private $selector;
+    private $expectedText;
+    private $hasNode = false;
+    private $nodeText;
 
     public function __construct(string $selector, string $expectedText)
     {

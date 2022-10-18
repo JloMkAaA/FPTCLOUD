@@ -1,58 +1,34 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Test;
 
 use Codeception\Configuration;
 use Codeception\Exception\ModuleException;
 use Codeception\Lib\Di;
-use Codeception\Lib\PauseShell;
-use Codeception\Module;
-use Codeception\PHPUnit\TestCase;
-use Codeception\ResultAggregator;
+use Codeception\Lib\Notification;
 use Codeception\Scenario;
-use Codeception\Test\Feature\Stub;
 use Codeception\TestInterface;
-use Codeception\Util\Debug;
-
-use function get_class;
-use function lcfirst;
-use function method_exists;
 
 /**
  * Represents tests from PHPUnit compatible format.
  */
-class Unit extends TestCase implements
+class Unit extends \Codeception\PHPUnit\TestCase implements
     Interfaces\Reported,
     Interfaces\Dependent,
     TestInterface
 {
-    use Stub;
+    use \Codeception\Test\Feature\Stub;
 
-    private ?Metadata $metadata = null;
+    /**
+     * @var Metadata
+     */
+    private $metadata;
 
-    private ?ResultAggregator $resultAggregator = null;
-
-    public function getMetadata(): Metadata
+    public function getMetadata()
     {
         if (!$this->metadata) {
             $this->metadata = new Metadata();
         }
         return $this->metadata;
-    }
-
-    public function getResultAggregator(): ResultAggregator
-    {
-        if ($this->resultAggregator === null) {
-            throw new \LogicException('ResultAggregator is not set');
-        }
-        return $this->resultAggregator;
-    }
-
-    public function setResultAggregator(?ResultAggregator $resultAggregator): void
-    {
-        $this->resultAggregator = $resultAggregator;
     }
 
     protected function _setUp()
@@ -67,7 +43,7 @@ class Unit extends TestCase implements
             return;
         }
 
-        /** @var Di $di */
+        /** @var $di Di  **/
         $di = $this->getMetadata()->getService('di');
         $di->set(new Scenario($this));
 
@@ -100,7 +76,12 @@ class Unit extends TestCase implements
     {
     }
 
-    public function getModule(string $module): Module
+    /**
+     * @param $module
+     * @return \Codeception\Module
+     * @throws ModuleException
+     */
+    public function getModule($module)
     {
         $modules = $this->getMetadata()->getCurrent('modules');
         if (!isset($modules[$module])) {
@@ -110,58 +91,62 @@ class Unit extends TestCase implements
     }
 
     /**
-     * Starts interactive pause in this test
-     *
-     * @param array<string, mixed> $vars
-     * @return void
-     */
-    public function pause(array $vars = []): void
-    {
-        if (!Debug::isEnabled()) {
-            return;
-        }
-        $psy = (new PauseShell())->getShell();
-        $psy->setBoundObject($this);
-        $psy->setScopeVariables($vars);
-        $psy->run();
-    }
-
-    /**
      * Returns current values
      */
-    public function getCurrent(?string $current): mixed
+    public function getCurrent($current)
     {
         return $this->getMetadata()->getCurrent($current);
     }
 
-    public function getReportFields(): array
+    /**
+     * @return array
+     */
+    public function getReportFields()
     {
         return [
-            'name'    => $this->getName(false),
+            'name'    => $this->getName(),
             'class'   => get_class($this),
             'file'    => $this->getMetadata()->getFilename()
         ];
     }
 
-    public function fetchDependencies(): array
+    public function fetchDependencies()
     {
         $names = [];
         foreach ($this->getMetadata()->getDependencies() as $required) {
-            if (!str_contains($required, ':') && method_exists($this, $required)) {
-                $required = get_class($this) . ":{$required}";
+            if ((strpos($required, ':') === false) and method_exists($this, $required)) {
+                $required = get_class($this) . ":$required";
             }
             $names[] = $required;
         }
         return $names;
     }
 
-    public function getFileName(): string
+    /**
+     * Reset PHPUnit's dependencies
+     * @return bool
+     */
+    public function handleDependencies()
     {
-        return $this->getMetadata()->getFilename();
-    }
+        $dependencies = $this->fetchDependencies();
+        if (empty($dependencies)) {
+            return true;
+        }
+        $passed = $this->getTestResultObject()->passed();
+        $dependencyInput = [];
 
-    public function getSignature(): string
-    {
-        return $this->getName(false);
+        foreach ($dependencies as $dependency) {
+            $dependency = str_replace(':', '::', $dependency); // Codeception => PHPUnit format
+            if (strpos($dependency, '::') === false) {         // check it is method of same class
+                $dependency = get_class($this) . '::' . $dependency;
+            }
+            if (isset($passed[$dependency])) {
+                $dependencyInput[] = $passed[$dependency]['result'];
+            } else {
+                $dependencyInput[] = null;
+            }
+        }
+        $this->setDependencyInput($dependencyInput);
+        return true;
     }
 }

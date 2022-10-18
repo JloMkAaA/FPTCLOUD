@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Lib\Generator\Feature;
@@ -10,10 +7,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function basename;
-use function preg_match;
-use function rtrim;
 
 /**
  * Generates Feature file (in Gherkin):
@@ -25,10 +18,10 @@ use function rtrim;
  */
 class GenerateFeature extends Command
 {
-    use Shared\FileSystemTrait;
-    use Shared\ConfigTrait;
+    use Shared\FileSystem;
+    use Shared\Config;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition([
             new InputArgument('suite', InputArgument::REQUIRED, 'suite to be tested'),
@@ -37,12 +30,12 @@ class GenerateFeature extends Command
         ]);
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Generates empty feature file in suite';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
         $suite = $input->getArgument('suite');
         $filename = $input->getArgument('feature');
@@ -50,17 +43,17 @@ class GenerateFeature extends Command
         $config = $this->getSuiteConfig($suite);
         $this->createDirectoryFor($config['path'], $filename);
 
-        $feature = new Feature(basename($filename));
-        if (!preg_match('#\.feature$#', $filename)) {
+        $gen = new Feature(basename($filename));
+        if (!preg_match('~\.feature$~', $filename)) {
             $filename .= '.feature';
         }
-        $fullPath = rtrim($config['path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
-        $res = $this->createFile($fullPath, $feature->produce());
+        $full_path = rtrim($config['path'], DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
+        $res = $this->createFile($full_path, $gen->produce());
         if (!$res) {
-            $output->writeln("<error>Feature {$filename} already exists</error>");
+            $output->writeln("<error>Feature $filename already exists</error>");
             return 1;
         }
-        $output->writeln("<info>Feature was created in {$fullPath}</info>");
+        $output->writeln("<info>Feature was created in $full_path</info>");
         return 0;
     }
 }

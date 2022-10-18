@@ -1,17 +1,12 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
-use Codeception\Lib\Generator\GherkinSnippets as GherkinSnippetsGenerator;
+use Codeception\Lib\Generator\GherkinSnippets as SnippetsGenerator;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function count;
 
 /**
  * Generates code snippets for matched feature files in a suite.
@@ -26,10 +21,10 @@ use function count;
  */
 class GherkinSnippets extends Command
 {
-    use Shared\ConfigTrait;
-    use Shared\StyleTrait;
+    use Shared\Config;
+    use Shared\Style;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition(
             [
@@ -41,28 +36,27 @@ class GherkinSnippets extends Command
         parent::configure();
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Fetches empty steps from feature files of suite and prints code snippets for them';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
         $this->addStyles($output);
         $suite = $input->getArgument('suite');
         $test = $input->getArgument('test');
         $config = $this->getSuiteConfig($suite);
 
-        $generator = new GherkinSnippetsGenerator($config, $test);
-
+        $generator = new SnippetsGenerator($config, $test);
         $snippets = $generator->getSnippets();
+        $features = $generator->getFeatures();
+
         if (empty($snippets)) {
             $output->writeln("<notice> All Gherkin steps are defined. Exiting... </notice>");
             return 0;
         }
         $output->writeln("<comment> Snippets found in: </comment>");
-
-        $features = $generator->getFeatures();
         foreach ($features as $feature) {
             $output->writeln("<info>  - {$feature} </info>");
         }

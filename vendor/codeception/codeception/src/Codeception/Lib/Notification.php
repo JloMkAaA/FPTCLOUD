@@ -1,38 +1,29 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Lib;
 
 class Notification
 {
-    /**
-     * @var string[]
-     */
-    protected static array $messages = [];
+    protected static $messages = [];
 
-    public static function warning(string $message, string $location): void
+    public static function warning($message, $location)
     {
         self::$messages[] = 'WARNING: ' . self::formatMessage($message, $location);
     }
 
-    public static function deprecate(string $message, string $location = ''): void
+    public static function deprecate($message, $location = '')
     {
         self::$messages[] = 'DEPRECATION: ' . self::formatMessage($message, $location);
     }
 
-    private static function formatMessage(string $message, string $location = ''): string
+    private static function formatMessage($message, $location = '')
     {
-        if ($location !== '') {
-            return "<bold>{$message}</bold> <info>{$location}</info>";
+        if ($location) {
+            return "<bold>$message</bold> <info>$location</info>";
         }
         return $message;
     }
 
-    /**
-     * @return string[]
-     */
-    public static function all(): array
+    public static function all()
     {
         $messages = self::$messages;
         self::$messages = [];

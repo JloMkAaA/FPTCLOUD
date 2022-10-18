@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\test;
@@ -42,7 +42,7 @@ abstract class BaseActiveFixture extends DbFixture implements \IteratorAggregate
      * Returns the AR model by the specified model name.
      * A model name is the key of the corresponding data row in [[data]].
      * @param string $name the model name.
-     * @return \yii\db\ActiveRecord|null the AR model, or null if the model cannot be found in the database
+     * @return null|\yii\db\ActiveRecord the AR model, or null if the model cannot be found in the database
      * @throws \yii\base\InvalidConfigException if [[modelClass]] is not set.
      */
     public function getModel($name)

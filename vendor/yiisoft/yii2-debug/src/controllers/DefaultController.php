@@ -12,6 +12,7 @@ use yii\debug\models\search\Debug;
 use yii\web\Controller;
 use yii\web\NotFoundHttpException;
 use yii\web\Response;
+use Opis\Closure;
 
 /**
  * Debugger controller provides browsing over available debug logs.
@@ -174,7 +175,22 @@ class DefaultController extends Controller
             if ($forceReload) {
                 clearstatcache();
             }
-            $this->_manifest = $this->module->logTarget->loadManifest();
+            $indexFile = $this->module->dataPath . '/index.data';
+
+            $content = '';
+            $fp = @fopen($indexFile, 'r');
+            if ($fp !== false) {
+                @flock($fp, LOCK_SH);
+                $content = fread($fp, filesize($indexFile));
+                @flock($fp, LOCK_UN);
+                fclose($fp);
+            }
+
+            if ($content !== '') {
+                $this->_manifest = array_reverse(Closure\unserialize($content), true);
+            } else {
+                $this->_manifest = [];
+            }
         }
 
         return $this->_manifest;
@@ -193,7 +209,18 @@ class DefaultController extends Controller
         for ($retry = 0; $retry <= $maxRetry; ++$retry) {
             $manifest = $this->getManifest($retry > 0);
             if (isset($manifest[$tag])) {
-                $data = $this->module->logTarget->loadTagToPanels($tag);
+                $dataFile = $this->module->dataPath . "/$tag.data";
+                $data = Closure\unserialize(file_get_contents($dataFile));
+                $exceptions = $data['exceptions'];
+                foreach ($this->module->panels as $id => $panel) {
+                    if (isset($data[$id])) {
+                        $panel->tag = $tag;
+                        $panel->load(Closure\unserialize($data[$id]));
+                    }
+                    if (isset($exceptions[$id])) {
+                        $panel->setError($exceptions[$id]);
+                    }
+                }
                 $this->summary = $data['summary'];
 
                 return;

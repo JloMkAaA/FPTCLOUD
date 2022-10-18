@@ -1,29 +1,23 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
-use Codeception\Configuration;
-use Stecman\Component\Symfony\Console\BashCompletion\Completion as ConsoleCompletion;
-use Stecman\Component\Symfony\Console\BashCompletion\Completion\CompletionInterface as ConsoleCompletionInterface;
-use Stecman\Component\Symfony\Console\BashCompletion\Completion\ShellPathCompletion;
-use Stecman\Component\Symfony\Console\BashCompletion\CompletionCommand;
-use Stecman\Component\Symfony\Console\BashCompletion\CompletionHandler;
-use Symfony\Component\Console\Input\InputDefinition as SymfonyInputDefinition;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\OutputInterface;
-
-// phpcs:ignoreFile PSR1.Files.SideEffects.FoundWithSymbols
-if (!class_exists(ConsoleCompletion::class)) {
+if (!class_exists('Stecman\Component\Symfony\Console\BashCompletion\Completion')) {
     echo "Please install `stecman/symfony-console-completion\n` to enable auto completion";
     return;
 }
 
+use Codeception\Configuration;
+use Stecman\Component\Symfony\Console\BashCompletion\Completion as ConsoleCompletion;
+use Stecman\Component\Symfony\Console\BashCompletion\CompletionCommand;
+use Stecman\Component\Symfony\Console\BashCompletion\CompletionHandler;
+use Stecman\Component\Symfony\Console\BashCompletion\Completion\ShellPathCompletion;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Console\Output\OutputInterface;
+
 class Completion extends CompletionCommand
 {
-    protected function configureCompletion(CompletionHandler $handler): void
+    protected function configureCompletion(CompletionHandler $handler)
     {
         // Can't set for all commands, because it wouldn't work well with generate:suite
         $suiteCommands = [
@@ -31,6 +25,7 @@ class Completion extends CompletionCommand
             'config:validate',
             'console',
             'dry-run',
+            'generate:cept',
             'generate:cest',
             'generate:feature',
             'generate:phpunit',
@@ -45,26 +40,26 @@ class Completion extends CompletionCommand
             $handler->addHandler(new ConsoleCompletion(
                 $suiteCommand,
                 'suite',
-                ConsoleCompletionInterface::TYPE_ARGUMENT,
+                ConsoleCompletion::TYPE_ARGUMENT,
                 Configuration::suites()
             ));
         }
 
         $handler->addHandlers([
             new ShellPathCompletion(
-                ConsoleCompletionInterface::ALL_COMMANDS,
+                ConsoleCompletion::ALL_COMMANDS,
                 'path',
-                ConsoleCompletionInterface::TYPE_ARGUMENT
+                ConsoleCompletion::TYPE_ARGUMENT
             ),
             new ShellPathCompletion(
-                ConsoleCompletionInterface::ALL_COMMANDS,
+                ConsoleCompletion::ALL_COMMANDS,
                 'test',
-                ConsoleCompletionInterface::TYPE_ARGUMENT
+                ConsoleCompletion::TYPE_ARGUMENT
             ),
         ]);
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
         if ($input->getOption('generate-hook') && $input->getOption('use-vendor-bin')) {
             global $argv;
@@ -75,7 +70,7 @@ class Completion extends CompletionCommand
         return 0;
     }
 
-    protected function createDefinition(): SymfonyInputDefinition
+    protected function createDefinition()
     {
         $definition = parent::createDefinition();
         $definition->addOption(new InputOption(

@@ -1,28 +1,23 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Subscriber;
 
 use Codeception\Configuration;
 use Codeception\Event\SuiteEvent;
 use Codeception\Events;
+use Codeception\Exception\ConfigurationException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 class Bootstrap implements EventSubscriberInterface
 {
-    use Shared\StaticEventsTrait;
+    use Shared\StaticEvents;
 
-    /**
-     * @var array<string, string>
-     */
-    protected static array $events = [
+    public static $events = [
         Events::SUITE_INIT => 'loadBootstrap',
     ];
 
-    public function loadBootstrap(SuiteEvent $event): void
+    public function loadBootstrap(SuiteEvent $e)
     {
-        $settings = $event->getSettings();
+        $settings = $e->getSettings();
 
         if (!isset($settings['bootstrap'])) {
             return;

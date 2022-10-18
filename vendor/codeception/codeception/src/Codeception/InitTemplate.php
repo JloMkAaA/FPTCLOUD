@@ -1,16 +1,10 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Codeception;
 
-use Codeception\Command\Shared\FileSystemTrait;
-use Codeception\Command\Shared\StyleTrait;
-use Codeception\Lib\Generator\Actions;
-use Codeception\Lib\Generator\Actor;
-use Codeception\Lib\Generator\Helper;
+use Codeception\Command\Shared\FileSystem;
+use Codeception\Command\Shared\Style;
 use Codeception\Lib\ModuleContainer;
-use Exception;
 use Symfony\Component\Console\Helper\QuestionHelper;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -39,26 +33,39 @@ use Symfony\Component\Console\Question\Question;
  */
 abstract class InitTemplate
 {
-    use FileSystemTrait;
-    use StyleTrait;
+    use FileSystem;
+    use Style;
+
+    const GIT_IGNORE = '.gitignore';
 
     /**
      * @var string
      */
-    public const GIT_IGNORE = '.gitignore';
+    protected $namespace = '';
 
-    protected string $namespace = 'Tests';
+    /**
+     * @var string
+     */
+    protected $actorSuffix = 'Tester';
 
-    protected string $actorSuffix = 'Tester';
+    /**
+     * @var string
+     */
+    protected $workDir = '.';
 
-    protected string $supportNamespace = 'Support';
+    /**
+     * @var InputInterface
+     */
+    protected $input;
 
-    protected string $workDir = '.';
+    /**
+     * @var OutputInterface
+     */
+    protected $output;
 
-    protected OutputInterface $output;
-
-    public function __construct(protected InputInterface $input, OutputInterface $output)
+    public function __construct(InputInterface $input, OutputInterface $output)
     {
+        $this->input = $input;
         $this->addStyles($output);
         $this->output = $output;
     }
@@ -66,10 +73,10 @@ abstract class InitTemplate
     /**
      * Change the directory where Codeception should be installed.
      */
-    public function initDir(string $workDir): void
+    public function initDir($workDir)
     {
         $this->checkInstalled($workDir);
-        $this->sayInfo("Initializing Codeception in {$workDir}");
+        $this->sayInfo("Initializing Codeception in $workDir");
         $this->createDirectoryFor($workDir);
         chdir($workDir);
         $this->workDir = $workDir;
@@ -77,7 +84,6 @@ abstract class InitTemplate
 
     /**
      * Override this class to create customized setup.
-     *
      * @return mixed
      */
     abstract public function setup();
@@ -95,11 +101,13 @@ abstract class InitTemplate
      * $this->ask('do you want to proceed (y/n)', true);
      * ```
      *
+     * @param string $question
+     * @param mixed $answer
      * @return mixed|string
      */
-    protected function ask(string $question, string|bool|array $answer = null): mixed
+    protected function ask($question, $answer = null)
     {
-        $question = "? {$question}";
+        $question = "? $question";
         $dialog = new QuestionHelper();
         if (is_array($answer)) {
             $question .= " <info>(" . $answer[0] . ")</info> ";
@@ -109,10 +117,10 @@ abstract class InitTemplate
             $question .= " (y/n) ";
             return $dialog->ask($this->input, $this->output, new ConfirmationQuestion($question, $answer));
         }
-        if (is_string($answer)) {
-            $question .= " <info>({$answer})</info>";
+        if ($answer) {
+            $question .= " <info>($answer)</info>";
         }
-        return $dialog->ask($this->input, $this->output, new Question("{$question} ", $answer));
+        return $dialog->ask($this->input, $this->output, new Question("$question ", $answer));
     }
 
     /**
@@ -122,92 +130,107 @@ abstract class InitTemplate
      * <?php
      * $this->say('Welcome to Setup');
      * ```
+     *
+     *
+     * @param string $message
      */
-    protected function say(string $message = ''): void
+    protected function say($message = '')
     {
         $this->output->writeln($message);
     }
 
     /**
      * Print a successful message
+     * @param string $message
      */
-    protected function saySuccess(string $message): void
+    protected function saySuccess($message)
     {
-        $this->say("<notice> {$message} </notice>");
+        $this->say("<notice> $message </notice>");
     }
 
     /**
      * Print error message
+     * @param string $message
      */
-    protected function sayError(string $message): void
+    protected function sayError($message)
     {
-        $this->say("<error> {$message} </error>");
+        $this->say("<error> $message </error>");
     }
 
     /**
      * Print warning message
+     * @param $message
      */
-    protected function sayWarning(string $message): void
+    protected function sayWarning($message)
     {
-        $this->say("<warning> {$message} </warning>");
+        $this->say("<warning> $message </warning>");
     }
 
     /**
      * Print info message
+     * @param string $message
      */
-    protected function sayInfo(string $message): void
+    protected function sayInfo($message)
     {
-        $this->say("<debug> {$message}</debug>");
+        $this->say("<debug> $message</debug>");
     }
 
     /**
      * Create a helper class inside a directory
+     *
+     * @param $name
+     * @param $directory
      */
-    protected function createHelper(string $name, string $directory, array $settings = []): void
+    protected function createHelper($name, $directory)
     {
         $file = $this->createDirectoryFor(
             $dir = $directory . DIRECTORY_SEPARATOR . "Helper",
-            "{$name}.php"
-        ) . "{$name}.php";
+            "$name.php"
+        ) . "$name.php";
 
-        $gen = new Helper($settings, $name);
-
+        $gen = new Lib\Generator\Helper($name, $this->namespace);
         // generate helper
         $this->createFile(
             $file,
             $gen->produce()
         );
         require_once $file;
-        $this->sayInfo("{$name} helper has been created in {$dir}");
+        $this->sayInfo("$name helper has been created in $dir");
     }
 
     /**
      * Create an empty directory and add a placeholder file into it
+     * @param $dir
      */
-    protected function createEmptyDirectory(string $dir): void
+    protected function createEmptyDirectory($dir)
     {
         $this->createDirectoryFor($dir);
         $this->createFile($dir . DIRECTORY_SEPARATOR . '.gitkeep', '');
     }
 
-    protected function gitIgnore(string $path): void
+    protected function gitIgnore($path)
     {
-        file_put_contents($path . DIRECTORY_SEPARATOR . self::GIT_IGNORE, "*\n!" . self::GIT_IGNORE . "\n");
+        if (file_exists(self::GIT_IGNORE)) {
+            file_put_contents($path . DIRECTORY_SEPARATOR . self::GIT_IGNORE, "*\n!" . self::GIT_IGNORE);
+        }
     }
 
-    protected function checkInstalled(string $dir = '.'): void
+    protected function checkInstalled($dir = '.')
     {
         if (file_exists($dir . DIRECTORY_SEPARATOR . 'codeception.yml') || file_exists($dir . DIRECTORY_SEPARATOR . 'codeception.dist.yml')) {
-            throw new Exception("Codeception is already installed in this directory");
+            throw new \Exception("Codeception is already installed in this directory");
         }
     }
 
     /**
      * Create an Actor class and generate actions for it.
      * Requires a suite config as array in 3rd parameter.
-     * @param array<string, mixed> $suiteConfig
+     *
+     * @param $name
+     * @param $directory
+     * @param $suiteConfig
      */
-    protected function createActor(string $name, string $directory, array $suiteConfig): void
+    protected function createActor($name, $directory, $suiteConfig)
     {
         $file = $this->createDirectoryFor(
             $directory,
@@ -218,14 +241,14 @@ abstract class InitTemplate
         $suiteConfig['namespace'] = $this->namespace;
         $config = Configuration::mergeConfigs(Configuration::$defaultSuiteSettings, $suiteConfig);
 
-        $actorGenerator = new Actor($config);
+        $actorGenerator = new Lib\Generator\Actor($config);
 
         $content = $actorGenerator->produce();
 
         $this->createFile($file, $content);
-        $this->sayInfo("{$name} actor has been created in {$directory}");
+        $this->sayInfo("$name actor has been created in $directory");
 
-        $actionsGenerator = new Actions($config);
+        $actionsGenerator = new Lib\Generator\Actions($config);
         $content = $actionsGenerator->produce();
 
         $generatedDir = $directory . DIRECTORY_SEPARATOR . '_generated';
@@ -234,7 +257,7 @@ abstract class InitTemplate
         $this->sayInfo("Actions have been loaded");
     }
 
-    protected function addModulesToComposer(array $modules): ?int
+    protected function addModulesToComposer($modules)
     {
         $packages = ModuleContainer::$packages;
         $section = null;
@@ -248,24 +271,28 @@ abstract class InitTemplate
                     continue;
                 }
                 $package = $packages[$module];
-                $this->say(sprintf('"%s": "%s"', $package, "*"));
-                $composer[$section][$package] = "*";
+                $this->say(sprintf('"%s": "%s"', $package, "^1.0.0"));
+                $composer[$section][$package] = "^1.0.0";
             }
             $this->say('');
-            return null;
+            return;
         }
-        $composer = json_decode(file_get_contents('composer.json'), true, 512, JSON_THROW_ON_ERROR);
+        $composer = json_decode(file_get_contents('composer.json'), true);
         if ($composer === null) {
-            throw new Exception("Invalid composer.json file. JSON can't be decoded");
+            throw new \Exception("Invalid composer.json file. JSON can't be decoded");
         }
         $section = null;
-        if (isset($composer['require']) && isset($composer['require']['codeception/codeception'])) {
-            $section = 'require';
+        if (isset($composer['require'])) {
+            if (isset($composer['require']['codeception/codeception'])) {
+                $section = 'require';
+            }
         }
-        if (isset($composer['require-dev']) && isset($composer['require-dev']['codeception/codeception'])) {
-            $section = 'require-dev';
+        if (isset($composer['require-dev'])) {
+            if (isset($composer['require-dev']['codeception/codeception'])) {
+                $section = 'require-dev';
+            }
         }
-        if ($section === null) {
+        if (!$section) {
             $section = 'require';
         }
 
@@ -278,15 +305,15 @@ abstract class InitTemplate
             if (isset($composer[$section][$package])) {
                 continue;
             }
-            $this->sayInfo("Adding {$package} for {$module} to composer.json");
-            $composer[$section][$package] = "*";
-            ++$packageCounter;
+            $this->sayInfo("Adding $package for $module to composer.json");
+            $composer[$section][$package] = "^1.0.0";
+            $packageCounter++;
         }
 
         file_put_contents('composer.json', json_encode($composer, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
 
-        if ($packageCounter !== 0) {
-            $this->say("{$packageCounter} new packages added to {$section}");
+        if ($packageCounter) {
+            $this->say("$packageCounter new packages added to $section");
         }
 
         if ($packageCounter && $this->ask('composer.json updated. Do you want to run "composer update"?', true)) {
@@ -294,7 +321,7 @@ abstract class InitTemplate
             exec('composer update', $output, $status);
             if ($status !== 0) {
                 $this->sayInfo('Composer installation failed. Please check composer.json and try to run "composer update" manually');
-                return null;
+                return;
             }
             if (!empty($composer['config']['vendor_dir'])) {
                 $this->updateComposerClassMap($composer['config']['vendor_dir']);
@@ -306,7 +333,7 @@ abstract class InitTemplate
         return $packageCounter;
     }
 
-    private function updateComposerClassMap(string $vendorDir = 'vendor'): void
+    private function updateComposerClassMap($vendorDir = 'vendor')
     {
         $loader = require $vendorDir . '/autoload.php';
         $classMap = require $vendorDir . '/composer/autoload_classmap.php';

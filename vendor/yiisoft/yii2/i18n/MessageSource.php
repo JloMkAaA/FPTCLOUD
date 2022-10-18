@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\i18n;
@@ -33,7 +33,7 @@ class MessageSource extends Component
      */
     public $forceTranslation = false;
     /**
-     * @var string|null the language that the original messages are in. If not set, it will use the value of
+     * @var string the language that the original messages are in. If not set, it will use the value of
      * [[\yii\base\Application::sourceLanguage]].
      */
     public $sourceLanguage;

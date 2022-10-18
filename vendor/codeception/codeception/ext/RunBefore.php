@@ -1,19 +1,11 @@
 <?php
 
-declare(strict_types=1);
-
 namespace Codeception\Extension;
 
 use Codeception\Events;
 use Codeception\Exception\ExtensionException;
 use Codeception\Extension;
 use Symfony\Component\Process\Process;
-
-use function array_shift;
-use function class_exists;
-use function count;
-use function is_array;
-use function sleep;
 
 /**
  * Extension for execution of some processes before running tests.
@@ -43,31 +35,29 @@ use function sleep;
  */
 class RunBefore extends Extension
 {
-    protected array $config = [];
+    protected $config = [];
 
-    /**
-     * @var array<string, string>
-     */
-    protected static array $events = [
+    protected static $events = [
         Events::SUITE_BEFORE => 'runBefore'
     ];
 
-    private array $processes = [];
+    /** @var array[] */
+    private $processes = [];
 
-    public function _initialize(): void
+    public function _initialize()
     {
-        if (!class_exists(Process::class)) {
+        if (!class_exists('Symfony\Component\Process\Process')) {
             throw new ExtensionException($this, 'symfony/process package is required');
         }
     }
 
-    public function runBefore(): void
+    public function runBefore()
     {
         $this->runProcesses();
         $this->processMonitoring();
     }
 
-    private function runProcesses(): void
+    private function runProcesses()
     {
         foreach ($this->config as $item) {
             if (is_array($item)) {
@@ -83,11 +73,20 @@ class RunBefore extends Extension
         }
     }
 
-    private function runProcess(string $command): Process
+    /**
+     * @param string $command
+     * @return Process
+     */
+    private function runProcess($command)
     {
         $this->output->debug('[RunBefore] Starting ' . $command);
 
-        $process = Process::fromShellCommandline($command, $this->getRootDir());
+        if (method_exists(Process::class, 'fromShellCommandline')) {
+            //Symfony 4.2+
+            $process = Process::fromShellCommandline($command, $this->getRootDir());
+        } else {
+            $process = new Process($command, $this->getRootDir());
+        }
         $process->start();
 
         return $process;
@@ -96,7 +95,7 @@ class RunBefore extends Extension
     /**
      * @param string[] $followingCommands
      */
-    private function addProcessToMonitoring(Process $process, array $followingCommands): void
+    private function addProcessToMonitoring(Process $process, array $followingCommands)
     {
         $this->processes[] = [
             'instance' => $process,
@@ -104,12 +103,15 @@ class RunBefore extends Extension
         ];
     }
 
-    private function removeProcessFromMonitoring(int $index): void
+    /**
+     * @param int $index
+     */
+    private function removeProcessFromMonitoring($index)
     {
         unset($this->processes[$index]);
     }
 
-    private function processMonitoring(): void
+    private function processMonitoring()
     {
         while (count($this->processes) !== 0) {
             $this->checkProcesses();
@@ -117,22 +119,11 @@ class RunBefore extends Extension
         }
     }
 
-    private function checkProcesses(): void
+    private function checkProcesses()
     {
         foreach ($this->processes as $index => $process) {
-            /**
-             * @var Process $processInstance
-             */
-            $processInstance = $process['instance'];
-
-            if (!$this->isRunning($processInstance)) {
-                if (!$processInstance->isSuccessful()) {
-                    $this->output->debug('[RunBefore] Failed ' . $processInstance->getCommandLine());
-                    $this->output->writeln('<error>' . $processInstance->getErrorOutput() . '</error>');
-                    exit(1);
-                }
-
-                $this->output->debug('[RunBefore] Completed ' . $processInstance->getCommandLine());
+            if (!$this->isRunning($process['instance'])) {
+                $this->output->debug('[RunBefore] Completing ' . $process['instance']->getCommandLine());
                 $this->runFollowingCommand($process['following']);
                 $this->removeProcessFromMonitoring($index);
             }
@@ -142,16 +133,19 @@ class RunBefore extends Extension
     /**
      * @param string[] $followingCommands
      */
-    private function runFollowingCommand(array $followingCommands): void
+    private function runFollowingCommand(array $followingCommands)
     {
-        if ($followingCommands !== []) {
+        if (count($followingCommands) > 0) {
             $process = $this->runProcess(array_shift($followingCommands));
             $this->addProcessToMonitoring($process, $followingCommands);
         }
     }
 
-    private function isRunning(Process $process): bool
+    private function isRunning(Process $process)
     {
-        return $process->isRunning();
+        if ($process->isRunning()) {
+            return true;
+        }
+        return false;
     }
 }

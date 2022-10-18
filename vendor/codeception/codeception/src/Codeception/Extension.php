@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception;
 
 use Codeception\Configuration as Config;
@@ -9,10 +6,6 @@ use Codeception\Event\SuiteEvent;
 use Codeception\Exception\ModuleRequireException;
 use Codeception\Lib\Console\Output;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-
-use function array_keys;
-use function array_merge;
-use function is_array;
 
 /**
  * A base class for all Codeception Extensions and GroupObjects
@@ -25,28 +18,22 @@ use function is_array;
  */
 abstract class Extension implements EventSubscriberInterface
 {
-    /**
-     * @var array<int|string, mixed>
-     */
-    protected array $config = [];
+    protected $config = [];
+    protected $options;
+    protected $output;
+    protected $globalConfig;
+    private $modules = [];
 
-    protected Output $output;
-
-    protected array $globalConfig = [];
-
-    /**
-     * @var array<string, Module>
-     */
-    private array $modules = [];
-
-    public function __construct(array $config, protected array $options)
+    public function __construct($config, $options)
     {
         $this->config = array_merge($this->config, $config);
+        $this->options = $options;
         $this->output = new Output($options);
         $this->_initialize();
     }
 
-    public static function getSubscribedEvents(): array
+
+    public static function getSubscribedEvents()
     {
         if (!isset(static::$events)) {
             return [Events::SUITE_INIT => 'receiveModuleContainer'];
@@ -62,90 +49,85 @@ abstract class Extension implements EventSubscriberInterface
         return static::$events;
     }
 
-    public function receiveModuleContainer(SuiteEvent $event): void
+    public function receiveModuleContainer(SuiteEvent $e)
     {
-        $this->modules = $event->getSuite()->getModules();
+        $this->modules = $e->getSuite()->getModules();
     }
 
     /**
      * Pass config variables that should be injected into global config.
+     *
+     * @param array $config
      */
-    public function _reconfigure(array $config = []): void
+    public function _reconfigure($config = [])
     {
-        Configuration::append($config);
+        if (is_array($config)) {
+            Config::append($config);
+        }
     }
 
     /**
      * You can do all preparations here. No need to override constructor.
      * Also you can skip calling `_reconfigure` if you don't need to.
      */
-    public function _initialize(): void
+    public function _initialize()
     {
         $this->_reconfigure(); // hook for BC only.
     }
 
-    /**
-     * @param string|iterable $messages The message as an iterable of strings or a single string
-     */
-    protected function write(iterable|string $messages): void
+    protected function write($message)
     {
-        if (!$this->options['silent'] && $messages) {
-            $this->output->write($messages);
+        if (!$this->options['silent']) {
+            $this->output->write($message);
         }
     }
 
-    /**
-     * @param string|iterable $messages The message as an iterable of strings or a single string
-     */
-    protected function writeln(iterable|string $messages): void
+    protected function writeln($message)
     {
-        if (!$this->options['silent'] && $messages) {
-            $this->output->writeln($messages);
+        if (!$this->options['silent']) {
+            $this->output->writeln($message);
         }
     }
 
-    public function hasModule(string $name): bool
+    public function hasModule($name)
     {
         return isset($this->modules[$name]);
     }
 
-    /**
-     * @return string[]
-     */
-    public function getCurrentModuleNames(): array
+    public function getCurrentModuleNames()
     {
         return array_keys($this->modules);
     }
 
-    public function getModule(string $name): Module
+    public function getModule($name)
     {
         if (!$this->hasModule($name)) {
-            throw new ModuleRequireException($name, 'module is not enabled');
+            throw new ModuleRequireException($name, "module is not enabled");
         }
         return $this->modules[$name];
     }
 
-    public function getTestsDir(): string
+    public function getTestsDir()
     {
         return Config::testsDir();
     }
 
-    public function getLogDir(): string
+    public function getLogDir()
     {
         return Config::outputDir();
     }
 
-    public function getDataDir(): string
+    public function getDataDir()
     {
         return Config::dataDir();
     }
 
-    public function getRootDir(): string
+    public function getRootDir()
     {
         return Config::projectDir();
     }
 
-    public function getGlobalConfig(): array
+    public function getGlobalConfig()
     {
         return Config::config();
     }

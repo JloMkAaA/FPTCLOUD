@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\widgets;
@@ -102,26 +102,7 @@ class MaskedInput extends InputWidget
      * @var string the hashed variable to store the pluginOptions
      */
     protected $_hashVar;
-    /**
-     * @var string[] the inputmask properties can be contained callbacks
-     */
-    protected $_jsCallbacks = [
-        'oncomplete',
-        'onincomplete',
-        'oncleared',
-        'onKeyDown',
-        'onBeforeMask',
-        'onBeforePaste',
-        'onBeforeWrite',
-        'onUnMask',
-        'onKeyValidation',
-        'isComplete',
-        // @deprecated removed in 5.0:
-        'preValidation',
-        'postValidation',
-        // @deprecated removed in 4.0:
-        'canClearPosition'
-    ];
+
 
     /**
      * Initializes the widget.
@@ -173,9 +154,11 @@ class MaskedInput extends InputWidget
         $options = $this->clientOptions;
         foreach ($options as $key => $value) {
             if (
-                !empty($value)
-                && !$value instanceof JsExpression
-                && in_array($key, $this->_jsCallbacks, true)
+                !$value instanceof JsExpression
+                && in_array($key, [
+                    'oncomplete', 'onincomplete', 'oncleared', 'onKeyUp', 'onKeyDown', 'onBeforeMask',
+                    'onBeforePaste', 'onUnMask', 'isComplete', 'determineActiveMasksetIndex',
+                ], true)
             ) {
                 $options[$key] = new JsExpression($value);
             }
@@ -195,10 +178,10 @@ class MaskedInput extends InputWidget
             $this->clientOptions['mask'] = $this->mask;
         }
         $this->hashPluginOptions($view);
-        if (!empty($this->definitions) && is_array($this->definitions)) {
+        if (is_array($this->definitions) && !empty($this->definitions)) {
             $js .= ucfirst(self::PLUGIN_NAME) . '.extendDefinitions(' . Json::htmlEncode($this->definitions) . ');';
         }
-        if (!empty($this->aliases) && is_array($this->aliases)) {
+        if (is_array($this->aliases) && !empty($this->aliases)) {
             $js .= ucfirst(self::PLUGIN_NAME) . '.extendAliases(' . Json::htmlEncode($this->aliases) . ');';
         }
         $id = $this->options['id'];

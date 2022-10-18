@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\helpers;
@@ -301,7 +301,7 @@ class BaseConsole
      *
      * @param int $colorCode xterm color code
      * @return string
-     * @see https://en.wikipedia.org/wiki/Talk:ANSI_escape_code#xterm-256colors
+     * @see http://en.wikipedia.org/wiki/Talk:ANSI_escape_code#xterm-256colors
      */
     public static function xtermFgColor($colorCode)
     {
@@ -316,7 +316,7 @@ class BaseConsole
      *
      * @param int $colorCode xterm color code
      * @return string
-     * @see https://en.wikipedia.org/wiki/Talk:ANSI_escape_code#xterm-256colors
+     * @see http://en.wikipedia.org/wiki/Talk:ANSI_escape_code#xterm-256colors
      */
     public static function xtermBgColor($colorCode)
     {
@@ -432,14 +432,14 @@ class BaseConsole
     public static function ansiToHtml($string, $styleMap = [])
     {
         $styleMap = [
-            // https://www.w3.org/TR/CSS2/syndata.html#value-def-color
+            // http://www.w3.org/TR/CSS2/syndata.html#value-def-color
             self::FG_BLACK => ['color' => 'black'],
             self::FG_BLUE => ['color' => 'blue'],
             self::FG_CYAN => ['color' => 'aqua'],
             self::FG_GREEN => ['color' => 'lime'],
             self::FG_GREY => ['color' => 'silver'],
-            // https://meyerweb.com/eric/thoughts/2014/06/19/rebeccapurple/
-            // https://drafts.csswg.org/css-color/#valuedef-rebeccapurple
+            // http://meyerweb.com/eric/thoughts/2014/06/19/rebeccapurple/
+            // http://dev.w3.org/csswg/css-color/#valuedef-rebeccapurple
             self::FG_PURPLE => ['color' => 'rebeccapurple'],
             self::FG_RED => ['color' => 'red'],
             self::FG_YELLOW => ['color' => 'yellow'],
@@ -688,17 +688,8 @@ class BaseConsole
     public static function getScreenSize($refresh = false)
     {
         static $size;
-        static $execDisabled;
-
-        if ($size !== null && ($execDisabled || !$refresh)) {
+        if ($size !== null && !$refresh) {
             return $size;
-        }
-
-        if ($execDisabled === null) {
-            $execDisabled = !function_exists('ini_get') || preg_match('/(\bexec\b)/i', ini_get('disable_functions'));
-            if ($execDisabled) {
-                return $size = false;
-            }
         }
 
         if (static::isRunningOnWindows()) {
@@ -816,7 +807,7 @@ class BaseConsole
      * Asks the user for input. Ends when the user types a carriage return (PHP_EOL). Optionally, It also provides a
      * prompt.
      *
-     * @param string|null $prompt the prompt to display before waiting for input (optional)
+     * @param string $prompt the prompt to display before waiting for input (optional)
      * @return string the user's input
      */
     public static function input($prompt = null)
@@ -831,7 +822,7 @@ class BaseConsole
     /**
      * Prints text to STDOUT appended with a carriage return (PHP_EOL).
      *
-     * @param string|null $string the text to print
+     * @param string $string the text to print
      * @return int|bool number of bytes printed or false on error.
      */
     public static function output($string = null)
@@ -842,7 +833,7 @@ class BaseConsole
     /**
      * Prints text to STDERR appended with a carriage return (PHP_EOL).
      *
-     * @param string|null $string the text to print
+     * @param string $string the text to print
      * @return int|bool number of bytes printed or false on error.
      */
     public static function error($string = null)
@@ -1007,7 +998,7 @@ class BaseConsole
      * @param int $total the total value of items that are to be done.
      * @param string $prefix an optional string to display before the progress bar.
      * Default to empty string which results in no prefix to be displayed.
-     * @param int|float|bool|null $width optional width of the progressbar. This can be an integer representing
+     * @param int|bool $width optional width of the progressbar. This can be an integer representing
      * the number of characters to display for the progress bar or a float between 0 and 1 representing the
      * percentage of screen with the progress bar may take. It can also be set to false to disable the
      * bar and only show progress information like percent, number of items and ETA.
@@ -1033,7 +1024,7 @@ class BaseConsole
      *
      * @param int $done the number of items that are completed.
      * @param int $total the total value of items that are to be done.
-     * @param string|null $prefix an optional string to display before the progress bar.
+     * @param string $prefix an optional string to display before the progress bar.
      * Defaults to null meaning the prefix specified by [[startProgress()]] will be used.
      * If prefix is specified it will update the prefix that will be used by later calls.
      * @see startProgress

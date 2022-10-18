@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\console;
@@ -10,7 +10,7 @@ namespace yii\console;
 /**
  * This class provides constants for defining console command exit codes.
  *
- * The exit codes follow the codes defined in the [FreeBSD sysexits(3)](https://man.openbsd.org/sysexits) manual page.
+ * The exit codes follow the codes defined in the [FreeBSD sysexits(3)](http://man.openbsd.org/sysexits) manual page.
  *
  * These constants can be used in console controllers for example like this:
  *
@@ -30,7 +30,7 @@ namespace yii\console;
  *
  * @author Tom Worster <fsb@thefsb.org>
  * @author Alexander Makarov <sam@rmcreative.ru>
- * @see https://man.openbsd.org/sysexits
+ * @see http://man.openbsd.org/sysexits
  * @since 2.0.13
  */
 class ExitCode

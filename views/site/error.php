@@ -1,6 +1,6 @@
 <?php
 
-use yii\bootstrap5\Html;
+use yii\bootstrap4\Html;
 
 $this->title = $name;
 ?>

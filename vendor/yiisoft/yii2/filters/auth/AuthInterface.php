@@ -1,8 +1,8 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\filters\auth;
@@ -26,7 +26,7 @@ interface AuthInterface
      * @param User $user
      * @param Request $request
      * @param Response $response
-     * @return IdentityInterface|null the authenticated user identity. If authentication information is not provided, null will be returned.
+     * @return IdentityInterface the authenticated user identity. If authentication information is not provided, null will be returned.
      * @throws UnauthorizedHttpException if authentication information is provided but is invalid.
      */
     public function authenticate($user, $request, $response);

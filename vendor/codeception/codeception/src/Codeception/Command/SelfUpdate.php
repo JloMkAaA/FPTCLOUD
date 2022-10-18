@@ -1,21 +1,15 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
-use Codeception\Codecept;
-use Exception;
 use Humbug\SelfUpdate\Updater;
-use Phar;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
-
-use function sprintf;
+use Symfony\Component\Console\Question\ConfirmationQuestion;
+use Codeception\Codecept;
 
 /**
- * Auto-updates phar archive from official site: 'https://codeception.com/codecept.phar' .
+ * Auto-updates phar archive from official site: 'http://codeception.com/codecept.phar' .
  *
  * * `php codecept.phar self-update`
  *
@@ -24,41 +18,46 @@ use function sprintf;
 class SelfUpdate extends Command
 {
     /**
-     * @var string
+     * Class constants
      */
-    public const NAME = 'Codeception';
-    /**
-     * @var string
-     */
-    public const GITHUB_REPO = 'Codeception/Codeception';
-    /**
-     * @var string
-     */
-    public const PHAR_URL = 'https://codeception.com/php73/';
+    const NAME = 'Codeception';
+    const GITHUB_REPO = 'Codeception/Codeception';
+    const PHAR_URL = 'http://codeception.com/';
+    const PHAR_URL_PHP56 = 'http://codeception.com/php56/';
 
     /**
      * Holds the current script filename.
+     * @var string
      */
-    protected string $filename;
+    protected $filename;
 
     /**
      * {@inheritdoc}
      */
-    protected function configure(): void
+    protected function configure()
     {
-        $this->filename = $_SERVER['argv'][0] ?? Phar::running(false);
+        if (isset($_SERVER['argv'][0])) {
+            $this->filename = $_SERVER['argv'][0];
+        } else {
+            $this->filename = \Phar::running(false);
+        }
+
         $this
-            ->setAliases(['selfupdate'])
+            ->setAliases(array('selfupdate'))
             ->setDescription(
                 sprintf(
                     'Upgrade <comment>%s</comment> to the latest version',
                     $this->filename
                 )
             );
+
         parent::configure();
     }
 
-    protected function getCurrentVersion(): string
+    /**
+     * @return string
+     */
+    protected function getCurrentVersion()
     {
         return Codecept::VERSION;
     }
@@ -66,19 +65,19 @@ class SelfUpdate extends Command
     /**
      * {@inheritdoc}
      */
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
-        $currentVersion = $this->getCurrentVersion();
+        $version = $this->getCurrentVersion();
 
         $output->writeln(
             sprintf(
                 '<info>%s</info> version <comment>%s</comment>',
                 self::NAME,
-                $currentVersion
+                $version
             )
         );
 
-        $url = self::PHAR_URL;
+        $url = $this->getPharUrl();
 
         $updater = new Updater(null, false);
         $updater->getStrategy()->setPharUrl($url . 'codecept.phar');
@@ -95,7 +94,7 @@ class SelfUpdate extends Command
             } else {
                 $output->writeln('You are already using the latest version.');
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $output->writeln(
                 sprintf(
                     "<error>\n%s\n</error>",
@@ -106,5 +105,18 @@ class SelfUpdate extends Command
         }
 
         return 0;
+    }
+
+    /**
+     * Returns base url of phar file for current PHP version
+     *
+     * @return string
+     */
+    protected function getPharUrl()
+    {
+        if (version_compare(PHP_VERSION, '7.2.0', '<')) {
+            return self::PHAR_URL_PHP56;
+        }
+        return self::PHAR_URL;
     }
 }

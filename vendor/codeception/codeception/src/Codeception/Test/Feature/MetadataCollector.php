@@ -1,31 +1,31 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Test\Feature;
 
 use Codeception\Test\Metadata;
 
 trait MetadataCollector
 {
-    private Metadata $metadata;
+    /**
+     * @var Metadata
+     */
+    private $metadata;
 
-    protected function setMetadata(Metadata $metadata): void
+    protected function setMetadata(Metadata $metadata)
     {
         $this->metadata = $metadata;
     }
 
-    public function getMetadata(): Metadata
+    public function getMetadata()
     {
         return $this->metadata;
     }
 
-    public function getName(): string
+    public function getName()
     {
         return $this->getMetadata()->getName();
     }
 
-    public function getFileName(): string
+    public function getFileName()
     {
         return $this->getMetadata()->getFilename();
     }

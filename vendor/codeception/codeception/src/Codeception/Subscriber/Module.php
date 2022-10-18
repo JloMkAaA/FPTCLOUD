@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Subscriber;
 
 use Codeception\Event\FailEvent;
@@ -13,16 +10,11 @@ use Codeception\Suite;
 use Codeception\TestInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
-use function array_reverse;
-
 class Module implements EventSubscriberInterface
 {
-    use Shared\StaticEventsTrait;
+    use Shared\StaticEvents;
 
-    /**
-     * @var array<string, string>
-     */
-    protected static array $events = [
+    public static $events = [
         Events::TEST_BEFORE  => 'before',
         Events::TEST_AFTER   => 'after',
         Events::STEP_BEFORE  => 'beforeStep',
@@ -33,33 +25,28 @@ class Module implements EventSubscriberInterface
         Events::SUITE_AFTER  => 'afterSuite'
     ];
 
-    /**
-     * @param \Codeception\Module[] $modules
-     */
-    public function __construct(protected array $modules = [])
-    {
-    }
+    protected $modules = [];
 
-    public function beforeSuite(SuiteEvent $event): void
+    public function beforeSuite(SuiteEvent $e)
     {
-        $suite = $event->getSuite();
+        $suite = $e->getSuite();
         if (!$suite instanceof Suite) {
             return;
         }
         $this->modules = $suite->getModules();
         foreach ($this->modules as $module) {
-            $module->_beforeSuite($event->getSettings());
+            $module->_beforeSuite($e->getSettings());
         }
     }
 
-    public function afterSuite(): void
+    public function afterSuite()
     {
-        foreach (array_reverse($this->modules) as $module) {
+        foreach ($this->modules as $module) {
             $module->_afterSuite();
         }
     }
 
-    public function before(TestEvent $event): void
+    public function before(TestEvent $event)
     {
         if (!$event->getTest() instanceof TestInterface) {
             return;
@@ -70,38 +57,38 @@ class Module implements EventSubscriberInterface
         }
     }
 
-    public function after(TestEvent $event): void
+    public function after(TestEvent $e)
     {
-        if (!$event->getTest() instanceof TestInterface) {
+        if (!$e->getTest() instanceof TestInterface) {
             return;
         }
-        foreach (array_reverse($this->modules) as $module) {
-            $module->_after($event->getTest());
+        foreach ($this->modules as $module) {
+            $module->_after($e->getTest());
             $module->_resetConfig();
         }
     }
 
-    public function failed(FailEvent $event): void
+    public function failed(FailEvent $e)
     {
-        if (!$event->getTest() instanceof TestInterface) {
+        if (!$e->getTest() instanceof TestInterface) {
             return;
         }
-        foreach (array_reverse($this->modules) as $module) {
-            $module->_failed($event->getTest(), $event->getFail());
+        foreach ($this->modules as $module) {
+            $module->_failed($e->getTest(), $e->getFail());
         }
     }
 
-    public function beforeStep(StepEvent $event): void
+    public function beforeStep(StepEvent $e)
     {
         foreach ($this->modules as $module) {
-            $module->_beforeStep($event->getStep());
+            $module->_beforeStep($e->getStep(), $e->getTest());
         }
     }
 
-    public function afterStep(StepEvent $event): void
+    public function afterStep(StepEvent $e)
     {
-        foreach (array_reverse($this->modules) as $module) {
-            $module->_afterStep($event->getStep());
+        foreach ($this->modules as $module) {
+            $module->_afterStep($e->getStep(), $e->getTest());
         }
     }
 }

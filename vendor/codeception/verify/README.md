@@ -3,54 +3,35 @@ Verify
 
 BDD Assertions for [PHPUnit][1] or [Codeception][2]
 
-[![Latest Stable Version](https://poser.pugx.org/codeception/verify/v/stable)](https://packagist.org/packages/codeception/verify)
-[![Total Downloads](https://poser.pugx.org/codeception/verify/downloads)](https://packagist.org/packages/codeception/verify)
-[![Build Status](https://travis-ci.org/Codeception/Verify.png?branch=master)](https://travis-ci.org/Codeception/Verify)
-[![License](https://poser.pugx.org/codeception/specify/license)](https://packagist.org/packages/codeception/verify)
-
 This is very tiny wrapper for PHPUnit assertions, that are aimed to make tests a bit more readable.
 With [BDD][3] assertions influenced by [Chai][4], [Jasmine][5], and [RSpec][6] your assertions would be a bit closer to natural language.
 
-⚠️ This is the Verify 2.0 documentation, to see v1.x docs click [here.](https://github.com/Codeception/Verify/tree/1.x)
-
-## Installation
-
-*Requires PHP  7.4 or higher*
-
-```
-composer require codeception/verify --dev
-```
-
-> :arrow_up: **Upgrade from 1.x by following [the upgrade guide.][10]**
-
-
-## Usage
-
-Use in any test `verify` function instead of `$this->assert*` methods:
+[![Build Status](https://travis-ci.org/Codeception/Verify.png?branch=master)](https://travis-ci.org/Codeception/Verify)
+[![Latest Stable Version](https://poser.pugx.org/codeception/verify/v/stable)](https://packagist.org/packages/codeception/verify)
+[![Total Downloads](https://poser.pugx.org/codeception/verify/downloads)](https://packagist.org/packages/codeception/verify)
 
 ```php
-use Codeception\Verify\Verify;
-
 $user = User::find(1);
 
-// equals
+// equal
 verify($user->getName())->equals('davert');
-
-verify($user->getNumPosts())
-    ->equals(5, 'user have 5 posts')
-    ->notEquals(3);
+verify("user have 5 posts", $user->getNumPosts())->equals(5);
+verify($user->getNumPosts())->notEquals(3);
 
 // contains
-Verify::Array($user->getRoles())
-    ->contains('admin', 'first user is admin')
-    ->notContains('banned', 'first user is not banned');
-
+verify('first user is admin', $user->getRoles())->contains('admin');
+verify("first user is not banned", $user->getRoles())->notContains('banned');
 
 // greater / less
-verify($user->getRate())
-    ->greaterThan(5)
-    ->lessThan(10)
-    ->equals(7, 'first user rate is 7');
+$rate = $user->getRate();
+verify('first user rate is 7', $rate)->equals(7);
+
+verify($rate)->greaterThan(5);
+verify($rate)->lessThan(10);
+verify($rate)->lessOrEquals(7);
+verify($rate)->lessOrEquals(8);
+verify($rate)->greaterOrEquals(7);
+verify($rate)->greaterOrEquals(5);
 
 // true / false / null
 verify($user->isAdmin())->true();
@@ -59,85 +40,112 @@ verify($user->invitedBy)->null();
 verify($user->getPosts())->notNull();
 
 // empty
-verify($user->getComments())->empty();
+verify($user->getComments())->isEmpty();
 verify($user->getRoles())->notEmpty();
 
-// throws
-Verify::Callable($callback)
-    ->throws()
-    ->throws(Exception::class)
-    ->throws(Exception::class, 'exception message')
-    ->throws(new Exception())
-    ->throws(new Exception('message'));
-
-// does not throw
-Verify::Callable($callback)
-    ->doesNotThrow()
-    ->throws(Exception::class)
-    ->doesNotThrow(new Exception());
-
-// and many more !
+//Other methods:
+* stringContainsString
+* stringNotContainsString
+* stringContainsStringIgnoringCase
+* stringNotContainsStringIgnoringCase
+* array
+* bool
+* float
+* int
+* numeric
+* object
+* resource
+* string
+* scalar
+* callable
+* notArray
+* notBool
+* notFloat
+* notInt
+* notNumeric
+* notObject
+* notResource
+* notString
+* notScalar
+* notCallable
 ```
 
-> :page_facing_up: **See Verifiers full list [here.][7]**
+Shorthands for testing truth/fallacy:
+
+```php
+verify_that($user->isActivated());
+verify_not($user->isBanned());
+```
+
+
+These two functions don't check for strict true/false matching, rather `empty` function is used.
+`verify_that` checks that result is not empty value, `verify_not` does the opposite.
 
 ## Alternative Syntax
 
-If you follow TDD/BDD you'd rather use `expect` instead of `verify`:
+If you follow TDD/BDD you'd rather use `expect` instead of `verify`. Which are just an alias functions:
 
 ```php
-expect($user->getNumPosts())
-    ->notToBeNull()
-    ->toBeInt()
-    ->toEqual(5, 'user have 5 posts');
+expect("user have 5 posts", $user->getNumPosts())->equals(5);
+expect_that($user->isActive());
+expect_not($user->isBanned());
 ```
-> :page_facing_up: **See Expectations full list [here.][8]**
->
-Or `verify_that` which is just an alias function:
 
-```php
-verify_that($user->getRate())->equals(7, 'first user rate is 7');
+## Installation
+
+### Installing via Composer
+
+Install composer in a common location or in your project:
+
+```sh
+curl -s http://getcomposer.org/installer | php
 ```
+
+Create the `composer.json` file as follows:
+
+```json
+"require-dev": {
+    "codeception/verify": "^1.0"
+}
+```
+
+Run the composer installer:
+
+```sh
+php composer.phar install
+```
+
+## Usage
+
+Use in any test `verify` function instead of `$this->assert*` methods.
 
 ## Extending
 
-In order to add more assertions you can extend the abstract class `Verify`:
+In order to add more assertions you can override `Codeception\Verify` class:
 
 ```php
-use Codeception\Verify\Verify;
-use PHPUnit\Framework\Assert;
+class MyVerify extends \Codeception\Verify {
 
-class MyVerify extends Verify {
-
-    //you can type $actual to only receive a specific data type
-
-    public function __construct($actual = null)
+    public function success()
     {
-        parent::__construct($actual);
-    }
-
-    public function success(string $message = '')
-    {
-        Assert::assertTrue(true, $message);
     }
 
 }
 ```
 
-And use it!
-
+Set the class name to `Codeception\Verify::$override` property to `verify` function use it:
+  
 ```php
-$myVerify = new MyVerify;
 
-$myVerify->success('it works!');
+\Codeception\Verify::$override = MyVerify::class;
 
-$myVerify::Mixed('this also')->notEquals('works');
+// access overridden class
+verify('it works')->success();
 ```
 
 ## License
 
-Verify is open-sourced software licensed under the [MIT][9] License.
-© Codeception PHP Testing Framework
+Verify is open-sourced software licensed under the [MIT][7] License. © Codeception PHP Testing Framework
 
 [1]: https://phpunit.de/
 [2]: http://codeception.com/
@@ -145,7 +153,4 @@ Verify is open-sourced software licensed under the [MIT][9] License.
 [4]: http://chaijs.com/
 [5]: http://jasmine.github.io/
 [6]: http://rspec.info/
-[7]: /docs/supported_verifiers.md
-[8]: /docs/supported_expectations.md
-[9]: /LICENSE
-[10]: /UPGRADE.md
+[7]: https://github.com/Codeception/Verify/blob/master/LICENSE

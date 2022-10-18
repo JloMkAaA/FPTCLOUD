@@ -1,7 +1,4 @@
 <?php
-
-declare(strict_types=1);
-
 namespace Codeception\Command;
 
 use Codeception\Configuration;
@@ -11,8 +8,6 @@ use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
-use function ucfirst;
-
 /**
  * Creates empty GroupObject - extension which handles all group events.
  *
@@ -20,40 +15,40 @@ use function ucfirst;
  */
 class GenerateGroup extends Command
 {
-    use Shared\FileSystemTrait;
-    use Shared\ConfigTrait;
+    use Shared\FileSystem;
+    use Shared\Config;
 
-    protected function configure(): void
+    protected function configure()
     {
         $this->setDefinition([
             new InputArgument('group', InputArgument::REQUIRED, 'Group class name'),
         ]);
     }
 
-    public function getDescription(): string
+    public function getDescription()
     {
         return 'Generates Group subscriber';
     }
 
-    public function execute(InputInterface $input, OutputInterface $output): int
+    public function execute(InputInterface $input, OutputInterface $output)
     {
         $config = $this->getGlobalConfig();
-        $groupInputArgument = (string)$input->getArgument('group');
+        $group = $input->getArgument('group');
 
-        $class = ucfirst($groupInputArgument);
+        $class = ucfirst($group);
         $path = $this->createDirectoryFor(Configuration::supportDir() . 'Group' . DIRECTORY_SEPARATOR, $class);
 
         $filename = $path . $class . '.php';
 
-        $group = new GroupGenerator($config, $groupInputArgument);
-        $res = $this->createFile($filename, $group->produce());
+        $gen = new GroupGenerator($config, $group);
+        $res = $this->createFile($filename, $gen->produce());
 
         if (!$res) {
-            $output->writeln("<error>Group {$filename} already exists</error>");
+            $output->writeln("<error>Group $filename already exists</error>");
             return 1;
         }
 
-        $output->writeln("<info>Group extension was created in {$filename}</info>");
+        $output->writeln("<info>Group extension was created in $filename</info>");
         $output->writeln(
             'To use this group extension, include it to "extensions" option of global Codeception config.'
         );

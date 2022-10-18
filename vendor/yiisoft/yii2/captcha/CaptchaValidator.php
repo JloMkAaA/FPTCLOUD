@@ -1,15 +1,14 @@
 <?php
 /**
- * @link https://www.yiiframework.com/
+ * @link http://www.yiiframework.com/
  * @copyright Copyright (c) 2008 Yii Software LLC
- * @license https://www.yiiframework.com/license/
+ * @license http://www.yiiframework.com/license/
  */
 
 namespace yii\captcha;
 
 use Yii;
 use yii\base\InvalidConfigException;
-use yii\helpers\Json;
 use yii\validators\ValidationAsset;
 use yii\validators\Validator;
 
@@ -90,7 +89,7 @@ class CaptchaValidator extends Validator
         ValidationAsset::register($view);
         $options = $this->getClientOptions($model, $attribute);
 
-        return 'yii.validation.captcha(value, messages, ' . Json::htmlEncode($options) . ');';
+        return 'yii.validation.captcha(value, messages, ' . json_encode($options, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . ');';
     }
 
     /**

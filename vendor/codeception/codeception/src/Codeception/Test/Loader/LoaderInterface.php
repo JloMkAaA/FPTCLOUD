@@ -1,12 +1,11 @@
 <?php
-
 namespace Codeception\Test\Loader;
 
 interface LoaderInterface
 {
-    public function loadTests(string $filename): void;
+    public function loadTests($filename);
 
-    public function getTests(): array;
+    public function getTests();
 
-    public function getPattern(): string;
+    public function getPattern();
 }

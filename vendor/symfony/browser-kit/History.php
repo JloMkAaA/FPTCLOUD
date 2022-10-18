@@ -42,8 +42,10 @@ class History
 
     /**
      * Returns true if the history is empty.
+     *
+     * @return bool true if the history is empty, false otherwise
      */
-    public function isEmpty(): bool
+    public function isEmpty()
     {
         return 0 == \count($this->stack);
     }
@@ -51,9 +53,11 @@ class History
     /**
      * Goes back in the history.
      *
+     * @return Request A Request instance
+     *
      * @throws \LogicException if the stack is already on the first page
      */
-    public function back(): Request
+    public function back()
     {
         if ($this->position < 1) {
             throw new \LogicException('You are already on the first page.');
@@ -65,9 +69,11 @@ class History
     /**
      * Goes forward in the history.
      *
+     * @return Request A Request instance
+     *
      * @throws \LogicException if the stack is already on the last page
      */
-    public function forward(): Request
+    public function forward()
     {
         if ($this->position > \count($this->stack) - 2) {
             throw new \LogicException('You are already on the last page.');
@@ -79,9 +85,11 @@ class History
     /**
      * Returns the current element in the history.
      *
+     * @return Request A Request instance
+     *
      * @throws \LogicException if the stack is empty
      */
-    public function current(): Request
+    public function current()
     {
         if (-1 == $this->position) {
             throw new \LogicException('The page history is empty.');
