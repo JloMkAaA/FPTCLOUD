@@ -63,7 +63,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
 	<?php $this->endBody() ?>
 </body>
-
+<!-- 
 <script>
 	$.ajax({
     type: 'GET',
@@ -73,6 +73,6 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
     },
     cache: false
 });
-</script>
+</script> -->
 </html>
 <?php $this->endPage() ?>

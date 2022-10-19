@@ -24,3 +24,9 @@ function changeTheme(element) {
 		}
 	}
 }
+
+let canvas = document.getElementById("circlecanvas");
+let context = canvas.getContext("2d");
+context.arc(50, 50, 50, 0, Math.PI * 2, false);
+context.fillStyle = "red";
+context.fill();
