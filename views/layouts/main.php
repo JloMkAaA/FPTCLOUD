@@ -64,5 +64,15 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 	<?php $this->endBody() ?>
 </body>
 
+<script>
+	$.ajax({
+    type: 'GET',
+    url: window.location.href,
+    success: function(output, status, xhr) {
+        alert(xhr.g);
+    },
+    cache: false
+});
+</script>
 </html>
 <?php $this->endPage() ?>

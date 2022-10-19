@@ -6,7 +6,6 @@ use yii\bootstrap4\ActiveForm;
 $this->title = 'Вход';
 ?>
 
-
 <div class="container">
 	<div class="row">
 		<div class="col-md-8 offset-md-2">
@@ -16,7 +15,7 @@ $this->title = 'Вход';
 				<h1 class="text-center mb-4"><?= Html::encode($this->title) ?></h1>
 				<?= $form->field($model, 'login')->textInput(['autofocus' => true, 'class' => 'form-style ', 'placeholder' => 'введите логин'])->label(false) ?>
 				<?= $form->field($model, 'password')->passwordInput(['class' => 'form-style', 'placeholder' => 'введите пароль'])->label(false) ?>
-				<?= $form->field($model, 'rememberMe')->checkbox(['class' => 'form-style']) ?>
+				<?= $form->field($model, 'rememberMe')->checkbox() ?>
 
 				<div class="d-flex justify-content-center mt-4"><?= Html::submitButton('Войти', ['class' => 'btn btn-success']) ?></div>
 				<?php ActiveForm::end(); ?>

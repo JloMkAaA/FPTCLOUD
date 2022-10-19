@@ -1,6 +1,7 @@
 <?php
 
 use yii\bootstrap4\Html;
+use yii\widgets\ListView;
 
 $this->title = 'Профиль';
 ?>
@@ -12,3 +13,4 @@ $this->title = 'Профиль';
 		</div>
 	</div>
 </div>
+
