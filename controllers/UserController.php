@@ -34,7 +34,8 @@ class UserController extends Controller
 
 	public function actionIndex()
 	{
-		return $this->render('index');
+		$model = Yii::$app->user->identity;
+		return $this->render('index', ['model' => $model]);
 	}
 
 	public function actionSignup()

@@ -1,32 +1,41 @@
 
-let flag = false;
+function setCookie(name, value) {
+	document.cookie = encodeURIComponent(name) + "=" + encodeURIComponent(value) + "; path=/";
+}
+function getCookie(name) {
+	let matches = document.cookie.match(new RegExp(
+	  "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+	));
+	return matches ? decodeURIComponent(matches[1]) : undefined;
+  }
+  
+
+let darkTheme = false;
 
 function changeTheme(element) {
-	element.innerText = (flag = !flag) ? 'Вкл.' : 'Выкл.';
 
-	if (element.classList.contains(flag ? 'btn-white' : 'btn-dark')) {
-		element.classList.remove(flag ? 'btn-white' : 'btn-dark');
-		element.classList.add(flag ? 'btn-dark' : 'btn-white');
+	setCookie('darkTheme', darkTheme);
+
+
+	element.innerText = (darkTheme = !darkTheme) ? 'Вкл.' : 'Выкл.';
+
+	if (element.classList.contains(darkTheme ? 'btn-white' : 'btn-dark')) {
+		element.classList.remove(darkTheme ? 'btn-white' : 'btn-dark');
+		element.classList.add(darkTheme ? 'btn-dark' : 'btn-white');
 	}
 
 	let elements = document.body.getElementsByTagName('*');
 	for (let index = 0; index < elements.length; index++) {
 		const item = elements[index];
 
-		if (item.classList.contains(flag ? 'bg-light' : 'bg-dark')) {
-			item.classList.remove(flag ? 'bg-light' : 'bg-dark');
-			item.classList.add(flag ? 'bg-dark' : 'bg-light');
+		if (item.classList.contains(darkTheme ? 'bg-light' : 'bg-dark')) {
+			item.classList.remove(darkTheme ? 'bg-light' : 'bg-dark');
+			item.classList.add(darkTheme ? 'bg-dark' : 'bg-light');
 		}
 
-		if (item.classList.contains(flag ? 'navbar-light' : 'navbar-dark')) {
-			item.classList.remove(flag ? 'navbar-light' : 'navbar-dark');
-			item.classList.add(flag ? 'navbar-dark' : 'navbar-light');
+		if (item.classList.contains(darkTheme ? 'navbar-light' : 'navbar-dark')) {
+			item.classList.remove(darkTheme ? 'navbar-light' : 'navbar-dark');
+			item.classList.add(darkTheme ? 'navbar-dark' : 'navbar-light');
 		}
 	}
 }
-
-let canvas = document.getElementById("circlecanvas");
-let context = canvas.getContext("2d");
-context.arc(50, 50, 50, 0, Math.PI * 2, false);
-context.fillStyle = "red";
-context.fill();

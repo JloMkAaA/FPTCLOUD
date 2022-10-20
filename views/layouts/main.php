@@ -34,7 +34,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 			'options' => ['class' => 'navbar-expand-md navbar-light bg-light border-bottom']
 		]); ?>
 		<?= Nav::widget([
-			'options' => ['class' => 'navbar-nav ms-auto'],
+			'options' => ['class' => 'navbar-nav ml-auto'],
 			'items' => [
 				['label' => 'Регистрация', 'url' => ['/user/signup'], 'visible' => Yii::$app->user->isGuest],
 				['label' => 'Вход', 'url' => ['/user/signin'], 'visible' => Yii::$app->user->isGuest],
@@ -63,16 +63,6 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 
 	<?php $this->endBody() ?>
 </body>
-<!-- 
-<script>
-	$.ajax({
-    type: 'GET',
-    url: window.location.href,
-    success: function(output, status, xhr) {
-        alert(xhr.g);
-    },
-    cache: false
-});
-</script> -->
+
 </html>
 <?php $this->endPage() ?>
