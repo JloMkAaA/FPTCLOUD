@@ -15,6 +15,7 @@ let darkTheme = false;
 function changeTheme(element) {
 
 	setCookie('darkTheme', darkTheme);
+	
 
 
 	element.innerText = (darkTheme = !darkTheme) ? 'Вкл.' : 'Выкл.';
@@ -37,5 +38,10 @@ function changeTheme(element) {
 			item.classList.remove(darkTheme ? 'navbar-light' : 'navbar-dark');
 			item.classList.add(darkTheme ? 'navbar-dark' : 'navbar-light');
 		}
+	}
+	 
+	
+	if(Cookies.get('darkThem') == true){
+	console.log(Cookies.get())
 	}
 }
