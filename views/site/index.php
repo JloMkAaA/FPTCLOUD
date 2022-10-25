@@ -11,7 +11,7 @@ $this->title = Yii::$app->name;
 		<h1><?= Html::encode($this->title) ?></h1>
 		<div class="d-inline-flex align-items-center">
 			<span class="me-3">Тёмная тема:</span>
-			<?= Html::button('Выкл.', ['class' => 'btn btn-white', 'onclick' => 'changeTheme(this)']) ?>
+			<?= Html::button('Выкл.', ['class' => 'btn btn-white', 'id'=>'themeSwitch', 'onclick' => 'changeTheme()']) ?>
 		</div>
 	</div>
 </div>
