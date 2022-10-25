@@ -14,25 +14,26 @@ function getTheme() {
 }
 
 function setTheme(theme) {
-	themeSwitch.innerText = theme ? 'Вкл.' : 'Выкл.';
 
 	if (theme == false) {
-		document.body.style = 'background:silver; color:black';
-	
-		
+		document.body.style = 'background:black; color:white';
+		let text = document.getElementsByClassName('me-3');
+		// text.style.color = 'red';
 	}
 	else {
 		document.body.style = 'background:white; color:#c4c3ca';
 	}
-	
+
 }
 
 setTheme(getTheme());
 
-function changeTheme() {
+themeSwitch.addEventListener('click', function () {
 	const darkTheme = !getTheme();
 	setCookie('darkTheme', darkTheme);
 	setTheme(darkTheme);
+	themeSwitch.innerText = darkTheme ? 'темная тема' : 'светлая тема';
+});
 
 	// if (element.classList.contains(darkTheme ? 'btn-white' : 'btn-dark')) {
 	// 	element.classList.remove(darkTheme ? 'btn-white' : 'btn-dark');
@@ -53,5 +54,4 @@ function changeTheme() {
 	// 		item.classList.add(darkTheme ? 'navbar-dark' : 'navbar-light');
 	// 	}
 	// }
-}
 

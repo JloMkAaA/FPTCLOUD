@@ -36,6 +36,7 @@ $this->registerLinkTag(['rel' => 'icon', 'type' => 'image/x-icon', 'href' => Yii
 		<?= Nav::widget([
 			'options' => ['class' => 'navbar-nav ml-auto'],
 			'items' => [
+				['label' => 'Сменить тему', 'innerContainerOptions'=>['id' => 'themeSwitch']],
 				['label' => 'Регистрация', 'url' => ['/user/signup'], 'visible' => Yii::$app->user->isGuest],
 				['label' => 'Вход', 'url' => ['/user/signin'], 'visible' => Yii::$app->user->isGuest],
 				[
